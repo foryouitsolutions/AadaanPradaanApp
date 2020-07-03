@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bottom_sheet"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/transparent"
+    app:behavior_hideable="false"
+    app:behavior_peekHeight="80dp"
+    app:layout_behavior="@string/bottom_sheet_behavior">
+
+   <androidx.cardview.widget.CardView
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       app:cardBackgroundColor="@color/colorPrimary"
+       app:cardCornerRadius="10dp"
+       android:layout_marginBottom="-10dp"
+       app:cardElevation="20dp">
+       <LinearLayout
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:orientation="vertical"
+           android:padding="16dp">
+
+           <View
+               android:id="@+id/yourview"
+               android:layout_width="35dp"
+               android:layout_height="25dp"
+               android:background="@drawable/ic_baseline_keyboard_arrow_up_24"
+               android:backgroundTint="@color/colorBlack"
+               android:layout_gravity="center"
+               android:layout_marginBottom="10dp"/>
+           <TextView
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:text="Transfers"
+               android:fontFamily="@font/lato"
+               android:textColor="@android:color/black"
+               style="@style/TextAppearance.AppCompat.Headline"
+               android:textStyle="bold"/>
+
+           <TextView
+               android:layout_width="match_parent"
+               android:layout_height="?attr/actionBarSize"
+               android:text="ScreeenShot.jpg"
+               android:fontFamily="@font/lato"
+               style="@style/TextAppearance.AppCompat.Medium"
+               android:layout_marginTop="10dp"/>
+
+       </LinearLayout>
+
+   </androidx.cardview.widget.CardView>
+
+
+
+</LinearLayout>
