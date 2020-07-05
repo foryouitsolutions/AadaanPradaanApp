@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -13,6 +14,8 @@ import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
@@ -33,6 +36,9 @@ import android.net.wifi.p2p.WifiP2pConfig;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 public class MainActivity extends AppCompatActivity implements profileDialog.profileDialogListener {
     private static final String TAG = "sdsd";
     Button btnSend, btnReceive;
@@ -44,6 +50,39 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     WifiManager wifiManager;
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
+    Handler handler = new Handler();
+
+
+    Runnable runner = new Runnable() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void run() {
+            mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
+                @Override
+                public void onGroupInfoAvailable(WifiP2pGroup group) {
+                    if(group == null){
+                        Log.d(TAG, "onGroupInfoAvailable: no group!");
+                        return;
+                    }
+                    String groupPassword = group.getPassphrase();
+                    Log.d(TAG, "LOGGG" + groupPassword + group.getNetworkName());
+                }
+            });
+            mManager.requestPeers(mChannel, new WifiP2pManager.PeerListListener() {
+                @Override
+                public void onPeersAvailable(WifiP2pDeviceList peers) {
+                    Collection<WifiP2pDevice> list = peers.getDeviceList();
+                    Iterator<WifiP2pDevice> i = list.iterator();
+                    while(i.hasNext()){
+                        WifiP2pDevice device = i.next();
+                        Log.d(TAG, "onPeersAvailable: " + device.deviceAddress + device.deviceName);
+                    }
+                }
+            });
+            handler.postDelayed(this, 5000);
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,10 +129,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             public void onClick(View v) {
 
                 wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                Toast.makeText(getApplicationContext(), "starting..." + wifiManager.isP2pSupported(), Toast.LENGTH_SHORT).show();
+                wifiManager.setWifiEnabled(true);
                 mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
                 mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
 
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
 
                     return;
                 }
@@ -105,15 +147,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                         Toast.makeText(MainActivity.this, "hotspot ready", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "hotspot");
                         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
-                            @Override
-                            public void onGroupInfoAvailable(WifiP2pGroup group) {
-                                String groupPassword = group.getPassphrase();
-                                Log.d(TAG, "LOGGG" + groupPassword + group.getNetworkName());
-                            }
-                        });
+
+                        handler.postDelayed(runner, 1000);
+
+
                     }
 
                     @Override
