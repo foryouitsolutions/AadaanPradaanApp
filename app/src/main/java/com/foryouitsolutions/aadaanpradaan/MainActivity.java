@@ -8,7 +8,9 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
@@ -17,6 +19,7 @@ import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
+import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,6 +39,7 @@ import android.net.wifi.p2p.WifiP2pConfig;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
+import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -47,11 +51,37 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     WifiManager manager;
     private WifiManager.LocalOnlyHotspotReservation mReservation;
 
+    BroadcastReceiver mReceiver;
+    IntentFilter mIntentFilter;
     WifiManager wifiManager;
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     Handler handler = new Handler();
 
+
+    WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
+        @Override
+        public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
+            final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
+            if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner){
+                Log.d(TAG, "onConnectionInfoAvailable: as HOST");
+            }else if(wifiP2pInfo.groupFormed){
+                Log.d(TAG, "onConnectionInfoAvailable: as client");
+            }
+        }
+    };
+
+    WifiP2pManager.PeerListListener peerlistener = new WifiP2pManager.PeerListListener() {
+        @Override
+        public void onPeersAvailable(WifiP2pDeviceList peers) {
+            Collection<WifiP2pDevice> list = peers.getDeviceList();
+            Iterator<WifiP2pDevice> i = list.iterator();
+            while(i.hasNext()){
+                WifiP2pDevice device = i.next();
+                Log.d(TAG, "onPeersAvailable: " + device.deviceAddress + device.deviceName);
+            }
+        }
+    };
 
     Runnable runner = new Runnable() {
         @SuppressLint("MissingPermission")
@@ -68,17 +98,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                     Log.d(TAG, "LOGGG" + groupPassword + group.getNetworkName());
                 }
             });
-            mManager.requestPeers(mChannel, new WifiP2pManager.PeerListListener() {
-                @Override
-                public void onPeersAvailable(WifiP2pDeviceList peers) {
-                    Collection<WifiP2pDevice> list = peers.getDeviceList();
-                    Iterator<WifiP2pDevice> i = list.iterator();
-                    while(i.hasNext()){
-                        WifiP2pDevice device = i.next();
-                        Log.d(TAG, "onPeersAvailable: " + device.deviceAddress + device.deviceName);
-                    }
-                }
-            });
+            mManager.requestPeers(mChannel, peerlistener);
             handler.postDelayed(this, 5000);
         }
     };
@@ -118,9 +138,40 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
         //Send Button
         btnSend.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
                 Toast.makeText(getApplicationContext(), "Discovering...", Toast.LENGTH_SHORT).show();
+
+                wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+                mChannel = mManager.initialize(getApplicationContext(),getMainLooper(),null);
+
+                mReceiver = new WifiDirectBroadcastReceiver(mManager,mChannel,MainActivity.this);
+                mIntentFilter = new IntentFilter();
+                // Indicates a change in the Wi-Fi P2P status.
+                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+                // Indicates a change in the list of available peers.
+                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+                // Indicates the state of Wi-Fi P2P connectivity has changed.
+                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+                // Indicates this device's details have changed.
+                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+                Log.d("TAG", "initialWork: done");
+
+                mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Toast.makeText(MainActivity.this, "Discovering Nearby Devices...", Toast.LENGTH_SHORT).show();
+                        handler.postDelayed(runner, 1000);
+                    }
+
+                    @Override
+                    public void onFailure(int reason) {
+                        Toast.makeText(MainActivity.this, "Discovering Nearby Devices Failed...", Toast.LENGTH_SHORT).show();
+
+                    }
+                });
             }
         });
         //Receive Button
