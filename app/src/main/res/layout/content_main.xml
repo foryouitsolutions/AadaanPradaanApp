@@ -13,6 +13,16 @@
         android:layout_marginTop="30dp"
      />
 
+    <ListView
+        android:id="@+id/peerListView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@id/nearbyDevices"
+        android:layout_marginTop="25dp"
+        android:background="#dddddd"
+        />
+
     <TextView
         android:id="@+id/search"
         android:layout_width="match_parent"
@@ -78,6 +88,24 @@
             android:textAllCaps="false"
             android:textSize="20dp"
             android:text="Receive"
+            />
+
+
+        <Button
+            android:id="@+id/service_init"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:backgroundTint="#1a73e9"
+            android:padding="10dp"
+            android:fontFamily="@font/lato"
+            android:paddingEnd="30dp"
+            android:paddingStart="25dp"
+            android:drawableLeft="@drawable/ic_baseline_arrow_downward_24"
+            android:drawableTint="#fff"
+            android:textColor="#fff"
+            android:textAllCaps="false"
+            android:textSize="20dp"
+            android:text="Init Service"
             />
 
     </LinearLayout>
