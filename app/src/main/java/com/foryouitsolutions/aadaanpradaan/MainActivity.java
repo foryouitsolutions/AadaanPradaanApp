@@ -26,6 +26,8 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -33,6 +35,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -64,23 +67,17 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     Handler handler = new Handler();
-    final HashMap<String, ServiceDevice> buddies = new HashMap<>();
+    final HashMap<String, String> buddies = new HashMap<>();
     ListView listView;
-
-    private class ServiceDevice {
-        public String device_name;
-        public WifiP2pDevice device;
-    }
-
 
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
-            final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
+//            final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
             if (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner) {
-                Log.d(TAG, "onConnectionInfoAvailable: as HOST");
+                Toast.makeText(MainActivity.this, "We are connected to a P2P group as host", Toast.LENGTH_SHORT).show();
             } else if (wifiP2pInfo.groupFormed) {
-                Log.d(TAG, "onConnectionInfoAvailable: as client");
+                Toast.makeText(MainActivity.this, "We are connected to a P2P group as client", Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -164,14 +161,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 startRegistration(mManager, mChannel, "8081");
 
                 // discover nearby Wifi Direct services
-                 listView = findViewById(R.id.peerListView);
-                 String[] dataArray = new String[1];
-                 dataArray[0] = "No devices. Working...";
-                 ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
-                 listView.setAdapter(adapter);
+                listView = findViewById(R.id.peerListView);
+                String[] dataArray = new String[1];
+                dataArray[0] = "No devices. Working...";
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
+                listView.setAdapter(adapter);
 
-                 Toast.makeText(getApplicationContext(), "Setting listeners...", Toast.LENGTH_SHORT).show();
-                 mManager.setDnsSdResponseListeners(mChannel, servListener, txtListener);
+                Toast.makeText(getApplicationContext(), "Setting listeners...", Toast.LENGTH_SHORT).show();
+                mManager.setDnsSdResponseListeners(mChannel, servListener, txtListener);
 
                 WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance("AadaanPradaanService", "_presence._tcp");
                 mManager.addServiceRequest(mChannel,
@@ -193,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
                     @Override
                     public void onSuccess() {
-                                         Toast.makeText(MainActivity.this, "Discovering services called...", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Discovering services called...", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -201,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                         // Command failed.  Check for P2P_UNSUPPORTED, ERROR, or BUSY
                         Toast.makeText(MainActivity.this, "Adding service to manager failed with code " + code, Toast.LENGTH_SHORT).show();
                     }
-                    });
+                });
             }
         });
 
@@ -303,21 +300,58 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         public void onDnsSdTxtRecordAvailable(
                 String fullDomain, Map record, WifiP2pDevice device) {
             Log.d(TAG, "DnsSdTxtRecord available -" + record.toString());
-            ServiceDevice new_device = buddies.containsKey((device.deviceAddress))?buddies.get(device.deviceAddress): new ServiceDevice();
-            new_device.device_name = (String) record.get("device_name");
-            buddies.put(device.deviceAddress, new_device);
+            String device_name = (String) record.get("device_name");
+            String device_address = device.deviceAddress;
+            buddies.put(device_name, device_address);
 
-            String[] dataArray = new String[buddies.size()];
-            Set keys = buddies.keySet();
-            Iterator<String> iterator = keys.iterator();
-            int i= 0;
-            while(iterator.hasNext()){
-                String deviceAddress = iterator.next();
-                dataArray[i++] = buddies.get(deviceAddress).device_name;
-            }
-
+            String[] dataArray = (String[]) buddies.keySet().toArray();
             ArrayAdapter adapter= new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1, dataArray );
             listView.setAdapter(adapter);
+            listView.setOnItemLongClickListener(connectPeer);
+        }
+    };
+
+    ListView.OnItemLongClickListener connectPeer = new AdapterView.OnItemLongClickListener() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                //deprecated in API 26
+                v.vibrate(200);
+            }
+
+            Toast.makeText(MainActivity.this, "Connecting...", Toast.LENGTH_SHORT).show();
+            final String device_name = (String) ((TextView) view).getText();
+            String device_address;
+            if(!buddies.containsKey(device_name)){
+                Toast.makeText(MainActivity.this, "Cannot connect as device is no longer available", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+
+            device_address = buddies.get(device_name);
+            WifiP2pConfig config = new WifiP2pConfig();
+            config.deviceAddress = device_address;
+            // setup connection success listener
+            mManager.requestConnectionInfo(mChannel, connectionInfoListener);
+            mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(MainActivity.this, "Sent connection request to " + device_name, Toast.LENGTH_SHORT).show();
+                    mManager.requestConnectionInfo(mChannel, connectionInfoListener);
+                }
+
+                @Override
+                public void onFailure(int code) {
+                    // Command failed.  Check for P2P_UNSUPPORTED, ERROR, or BUSY
+                    Toast.makeText(MainActivity.this, "Setting service discovery properties to manager failed with code " + code, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+
+            return true;
         }
     };
 
@@ -328,23 +362,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
             // Update the device name with the human-friendly version from
             // the DnsTxtRecord, assuming one arrived.
+            String device_name = resourceType.deviceName;
+            String device_address = resourceType.deviceAddress;
+            buddies.put(device_name, device_address);
 
-            ServiceDevice new_device = buddies
-                    .containsKey(resourceType.deviceAddress) ? buddies
-                    .get(resourceType.deviceAddress) : new ServiceDevice();
-            new_device.device = resourceType;
-            buddies.put(resourceType.deviceAddress, new_device);
-            String[] dataArray = new String[buddies.size()];
-            Set keys = buddies.keySet();
-            Iterator<String> iterator = keys.iterator();
-            int i= 0;
-            while(iterator.hasNext()){
-                String deviceAddress = iterator.next();
-                dataArray[i++] = buddies.get(deviceAddress).device_name;
-            }
-
+            String[] dataArray = (String[]) buddies.keySet().toArray();
             ArrayAdapter adapter= new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1, dataArray );
             listView.setAdapter(adapter);
+            listView.setOnItemLongClickListener(connectPeer);
             Log.d(TAG, "onBonjourServiceAvailable " + instanceName);
         }
     };
