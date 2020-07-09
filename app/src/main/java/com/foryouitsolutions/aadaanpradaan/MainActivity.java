@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     Handler handler = new Handler();
+    boolean handler_running = false;
     final HashMap<String, String> buddies = new HashMap<>();
     ListView listView;
 
@@ -115,6 +116,32 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     };
 
 
+
+    Runnable runner2 = new Runnable() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void run() {
+            mManager.requestConnectionInfo(mChannel, connectionInfoListener);
+            handler.postDelayed(this, 5000);
+        }
+    };
+
+    WifiP2pManager.ActionListener ActionListenerBuilder(final String text, String error) {
+        return new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onFailure(int code) {
+                // Command failed.  Check for P2P_UNSUPPORTED, ERROR, or BUSY
+                Toast.makeText(MainActivity.this, "Adding service to manager failed with code " + code, Toast.LENGTH_SHORT).show();
+            }
+        };
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -152,13 +179,27 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
-                wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-                mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
-                // todo cleanup existing services
+                if(wifiManager == null){
+                    wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+                    mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), new WifiP2pManager.ChannelListener() {
+                        @Override
+                        public void onChannelDisconnected() {
+                            Toast.makeText(MainActivity.this, "Lost connection to P2P channel", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                // make sure wifi is initially on
+                wifiManager.setWifiEnabled(true);
                 // add local service
                 Toast.makeText(getApplicationContext(), "Inciting discovery service...", Toast.LENGTH_SHORT).show();
-                startRegistration(mManager, mChannel, "8081");
+                // setup connection listener
+                if(!handler_running){
+                    handler.post(runner2);
+                    handler_running = true;
+                    startRegistration(mManager, mChannel, "8081");
+                }
 
                 // discover nearby Wifi Direct services
                 listView = findViewById(R.id.peerListView);
@@ -173,33 +214,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance("AadaanPradaanService", "_presence._tcp");
                 mManager.addServiceRequest(mChannel,
                         serviceRequest,
-                        new WifiP2pManager.ActionListener() {
-                            @Override
-                            public void onSuccess() {
-                                Toast.makeText(MainActivity.this, "Service discovery properties set...", Toast.LENGTH_SHORT).show();
-                            }
+                        ActionListenerBuilder("Service discovery properties set...", "Setting service discovery properties to manager failed with code "));
 
-                            @Override
-                            public void onFailure(int code) {
-                                // Command failed.  Check for P2P_UNSUPPORTED, ERROR, or BUSY
-                                Toast.makeText(MainActivity.this, "Setting service discovery properties to manager failed with code " + code, Toast.LENGTH_SHORT).show();
-                            }
-                        });
-
-                mManager.discoverServices(mChannel, new WifiP2pManager.ActionListener() {
-
-                    @Override
-                    public void onSuccess() {
-                        Toast.makeText(MainActivity.this, "Discovering services called...", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onFailure(int code) {
-                        // Command failed.  Check for P2P_UNSUPPORTED, ERROR, or BUSY
-                        Toast.makeText(MainActivity.this, "Adding service to manager failed with code " + code, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
+                mManager.discoverServices(mChannel,
+                        ActionListenerBuilder("Discovering services called...", "Adding service to manager failed with code "));            }
         });
 
 
@@ -304,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             String device_address = device.deviceAddress;
             buddies.put(device_name, device_address);
 
-            String[] dataArray = (String[]) buddies.keySet().toArray();
+            String[] dataArray =  buddies.keySet().toArray(new String[0]);
             ArrayAdapter adapter= new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1, dataArray );
             listView.setAdapter(adapter);
             listView.setOnItemLongClickListener(connectPeer);
@@ -336,21 +354,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             config.deviceAddress = device_address;
             // setup connection success listener
             mManager.requestConnectionInfo(mChannel, connectionInfoListener);
-            mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                    Toast.makeText(MainActivity.this, "Sent connection request to " + device_name, Toast.LENGTH_SHORT).show();
-                    mManager.requestConnectionInfo(mChannel, connectionInfoListener);
-                }
-
-                @Override
-                public void onFailure(int code) {
-                    // Command failed.  Check for P2P_UNSUPPORTED, ERROR, or BUSY
-                    Toast.makeText(MainActivity.this, "Setting service discovery properties to manager failed with code " + code, Toast.LENGTH_SHORT).show();
-                }
-            });
-
-
+            mManager.connect(mChannel, config,
+                    ActionListenerBuilder("Sent connection request to " + device_name, "Setting service discovery properties to manager failed with code ")
+            );
             return true;
         }
     };
@@ -366,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             String device_address = resourceType.deviceAddress;
             buddies.put(device_name, device_address);
 
-            String[] dataArray = (String[]) buddies.keySet().toArray();
+            String[] dataArray =  buddies.keySet().toArray(new String[0]);
             ArrayAdapter adapter= new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1, dataArray );
             listView.setAdapter(adapter);
             listView.setOnItemLongClickListener(connectPeer);
@@ -395,18 +401,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             return;
         }
 
-        manager.addLocalService(channel, serviceInfo, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Toast.makeText(MainActivity.this, "Added service to manager", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onFailure(int arg0) {
-                // Command failed.  Check for P2P_UNSUPPORTED, ERROR, or BUSY
-                Toast.makeText(MainActivity.this, "Adding service to manager failed with code " + arg0, Toast.LENGTH_SHORT).show();
-            }
-        });
+        manager.addLocalService(channel, serviceInfo,
+                ActionListenerBuilder("Added service to manager", "Adding service to manager failed with code ")
+        );
     }
 
 
