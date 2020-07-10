@@ -7,13 +7,16 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -26,6 +29,7 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -46,7 +50,15 @@ import android.widget.Toast;
 import android.net.wifi.p2p.WifiP2pConfig;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.tonyodev.fetch2.Fetch;
+import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2.NetworkType;
+import com.tonyodev.fetch2.Priority;
+import com.tonyodev.fetch2.Request;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.HashMap;
@@ -64,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     WifiManager manager;
     private WifiManager.LocalOnlyHotspotReservation mReservation;
 
+    private Fetch fetch;
     BroadcastReceiver mReceiver;
     IntentFilter mIntentFilter;
     WifiManager wifiManager;
@@ -122,7 +135,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             handler.postDelayed(this, 5000);
         }
     };
-
 
 
     Runnable runner2 = new Runnable() {
@@ -196,9 +208,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
-                if(wifiManager == null){
-                    wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-                    mManager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
+                if (wifiManager == null) {
+                    wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
                     mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), new WifiP2pManager.ChannelListener() {
                         @Override
                         public void onChannelDisconnected() {
@@ -212,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 // add local service
                 Toast.makeText(getApplicationContext(), "Inciting discovery service...", Toast.LENGTH_SHORT).show();
                 // setup connection listener
-                if(!handler_running){
+                if (!handler_running) {
                     handler.post(runner2);
                     handler_running = true;
                     startRegistration(mManager, mChannel, "8081" , devicename);
@@ -234,7 +246,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                         ActionListenerBuilder("Service discovery properties set...", "Setting service discovery properties to manager failed with code "));
 
                 mManager.discoverServices(mChannel,
-                        ActionListenerBuilder("Discovering services called...", "Adding service to manager failed with code "));            }
+                        ActionListenerBuilder("Discovering services called...", "Adding service to manager failed with code "));
+            }
         });
 
 
@@ -280,43 +293,44 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         btnReceive.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//
+//                wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+//                Toast.makeText(getApplicationContext(), "starting..." + wifiManager.isP2pSupported(), Toast.LENGTH_SHORT).show();
+//                wifiManager.setWifiEnabled(true);
+//                mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+//                mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
+//
+//                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
+//
+//                    return;
+//                }
+//                mManager.createGroup(mChannel, new WifiP2pManager.ActionListener() {
+//                    @Override
+//                    public void onSuccess() {
+//                        // Device is ready to accept incoming connections from peers.
+//
+//                        Toast.makeText(MainActivity.this, "hotspot ready", Toast.LENGTH_SHORT).show();
+//                        Log.d(TAG, "hotspot");
+//                        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
+//                            return;
+//                        }
+//
+//                        handler.postDelayed(runner, 1000);
+//
+//
+//                    }
+//
+//                    @Override
+//                    public void onFailure(int reason) {
+//                        Toast.makeText(MainActivity.this, "P2P group creation failed. Retry.",
+//                                Toast.LENGTH_SHORT).show();
+//                        Log.d(TAG, "onFailure: " + reason);
+//                    }
+//                });
 
-                wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-                Toast.makeText(getApplicationContext(), "starting..." + wifiManager.isP2pSupported(), Toast.LENGTH_SHORT).show();
-                wifiManager.setWifiEnabled(true);
-                mManager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
-                mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
-
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-
-                    return;
-                }
-                mManager.createGroup(mChannel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        // Device is ready to accept incoming connections from peers.
-
-                        Toast.makeText(MainActivity.this, "hotspot ready", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "hotspot");
-                        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        handler.postDelayed(runner, 1000);
-
-
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        Toast.makeText(MainActivity.this, "P2P group creation failed. Retry.",
-                                Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "onFailure: " + reason);
-                    }
-                });
-
+                download_request_handler();
 
             }
         });
@@ -339,8 +353,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             String device_address = device.deviceAddress;
             buddies.put(device_name, device_address);
 
-            String[] dataArray =  buddies.keySet().toArray(new String[0]);
-            ArrayAdapter adapter= new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1, dataArray );
+            String[] dataArray = buddies.keySet().toArray(new String[0]);
+            ArrayAdapter adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
             listView.setAdapter(adapter);
             listView.setOnItemLongClickListener(connectPeer);
         }
@@ -361,7 +375,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             Toast.makeText(MainActivity.this, "Connecting...", Toast.LENGTH_SHORT).show();
             final String device_name = (String) ((TextView) view).getText();
             String device_address;
-            if(!buddies.containsKey(device_name)){
+            if (!buddies.containsKey(device_name)) {
                 Toast.makeText(MainActivity.this, "Cannot connect as device is no longer available", Toast.LENGTH_SHORT).show();
                 return true;
             }
@@ -389,8 +403,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             String device_address = resourceType.deviceAddress;
             buddies.put(device_name, device_address);
 
-            String[] dataArray =  buddies.keySet().toArray(new String[0]);
-            ArrayAdapter adapter= new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1, dataArray );
+            String[] dataArray = buddies.keySet().toArray(new String[0]);
+            ArrayAdapter adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
             listView.setAdapter(adapter);
             listView.setOnItemLongClickListener(connectPeer);
             Log.d(TAG, "onBonjourServiceAvailable " + instanceName);
@@ -430,6 +444,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         inflater.inflate(R.menu.profile, menu);
         return true;
     }
+
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
@@ -443,7 +458,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     private void profile() {
         profileDialog profileDialog = new profileDialog();
-        profileDialog.show(getSupportFragmentManager(),"Profile Dialog");
+        profileDialog.show(getSupportFragmentManager(), "Profile Dialog");
     }
 
     @Override
@@ -454,6 +469,76 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         editor.putString(MyPREFERENCES,username);
         editor.apply();
         useradd.setText(username);
+
+    }
+
+    int getRandomNo() {
+        return (int) (Math.random() * 1000);
+    }
+
+    void download_request_handler() {
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File file = new File( "read.pdf");
+        saveToFile(file);
+    }
+
+    final int SAVE_FILE_RESULT_CODE = 15;
+
+    void saveToFile(File aFile) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.setType("application/octet-stream");
+        intent.putExtra(Intent.EXTRA_TITLE, aFile.getPath());
+        try {
+            startActivityForResult(intent, SAVE_FILE_RESULT_CODE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, requestCode, data);
+        switch (requestCode) {
+            case SAVE_FILE_RESULT_CODE: {
+                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                    download_file("https://www.nehruplacemarket.com/price-list/cost-to-cost-price-list.pdf", data.getData(), getApplicationContext());
+                }
+                break;
+            }
+        }
+    }
+
+    void download_file(String fileURL, Uri file_uri, Context activity) {
+        try {
+            OutputStream f = activity.getApplicationContext().getContentResolver().openOutputStream(file_uri);
+            FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(activity)
+                    .setDownloadConcurrentLimit(3)
+                    .build();
+
+            fetch = Fetch.Impl.getInstance(fetchConfiguration);
+            final Request request = new Request(fileURL, file_uri);
+            request.setPriority(Priority.HIGH);
+            request.setNetworkType(NetworkType.ALL);
+
+            fetch.enqueue(request, updatedRequest -> {
+                Toast.makeText(activity, "Download completed!", Toast.LENGTH_SHORT).show();
+                //Request was successfully enqueued for download.
+            }, error -> {
+                Toast.makeText(activity, "Download error!" + error.getValue(), Toast.LENGTH_SHORT).show();
+                error.getThrowable().printStackTrace();
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
     }
 }
