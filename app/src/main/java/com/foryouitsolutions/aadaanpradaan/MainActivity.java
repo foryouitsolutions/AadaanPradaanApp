@@ -11,6 +11,7 @@ import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
@@ -53,10 +54,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static android.content.Context.*;
+
 public class MainActivity extends AppCompatActivity implements profileDialog.profileDialogListener {
     private static final String TAG = "sdsd";
     Button btnSend, btnReceive;
-    TextView useradd;
+    TextView useradd ,clientHost;
     private BottomSheetBehavior bottomSheetBehavior;
     WifiManager manager;
     private WifiManager.LocalOnlyHotspotReservation mReservation;
@@ -70,15 +73,20 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     boolean handler_running = false;
     final HashMap<String, String> buddies = new HashMap<>();
     ListView listView;
+    public static final String MyPREFERENCES = "MyPrefs" ;
+    SharedPreferences sharedPreferences;
+
 
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
 //            final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
             if (wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner) {
-                Toast.makeText(MainActivity.this, "We are connected to a P2P group as host", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "We are connected to a P2P group as host", Toast.LENGTH_SHORT).show();
+                clientHost.setText("Host");
             } else if (wifiP2pInfo.groupFormed) {
-                Toast.makeText(MainActivity.this, "We are connected to a P2P group as client", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "We are connected to a P2P group as client", Toast.LENGTH_SHORT).show();
+                clientHost.setText("Client");
             }
         }
     };
@@ -153,8 +161,17 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         btnSend = findViewById(R.id.send);
         btnReceive = findViewById(R.id.receive);
         useradd = findViewById(R.id.search);
+        clientHost = findViewById(R.id.clientHost);
         final View yourview = findViewById(R.id.yourview);
         LinearLayout linearLayout = findViewById(R.id.bottom_sheet);
+
+
+        //getting SharedPrefs
+        sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        final String devicename = (sharedPreferences.getString(MyPREFERENCES, ""));
+        useradd.setText(devicename);
+
+
 
         //Bottom Sheet
         bottomSheetBehavior = BottomSheetBehavior.from(linearLayout);
@@ -174,14 +191,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         ActionBar.LayoutParams p = new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         p.gravity = Gravity.CENTER;
 
-        // init service button
+        //init service button
         ((Button) findViewById(R.id.service_init)).setOnClickListener(new View.OnClickListener() {
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
                 if(wifiManager == null){
-                    wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+                    wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+                    mManager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
                     mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), new WifiP2pManager.ChannelListener() {
                         @Override
                         public void onChannelDisconnected() {
@@ -198,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 if(!handler_running){
                     handler.post(runner2);
                     handler_running = true;
-                    startRegistration(mManager, mChannel, "8081");
+                    startRegistration(mManager, mChannel, "8081" , devicename);
                 }
 
                 // discover nearby Wifi Direct services
@@ -228,8 +245,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             public void onClick(View v) {
                 Toast.makeText(getApplicationContext(), "Discovering...", Toast.LENGTH_SHORT).show();
 
-                wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+                wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+                mManager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
                 mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
 
                 mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, MainActivity.this);
@@ -264,10 +281,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             @Override
             public void onClick(View v) {
 
-                wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
                 Toast.makeText(getApplicationContext(), "starting..." + wifiManager.isP2pSupported(), Toast.LENGTH_SHORT).show();
                 wifiManager.setWifiEnabled(true);
-                mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+                mManager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
                 mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
 
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -333,7 +350,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         @SuppressLint("MissingPermission")
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 v.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE));
             } else {
@@ -380,11 +397,11 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
     };
 
-    private void startRegistration(WifiP2pManager manager, WifiP2pManager.Channel channel, String SERVER_PORT) {
+    private void startRegistration(WifiP2pManager manager, WifiP2pManager.Channel channel, String SERVER_PORT, String devicename) {
         //  Create a string map containing information about your service.
         Map record = new HashMap();
         record.put("listenport", SERVER_PORT);
-        record.put("device_name", "John Doe" + (int) (Math.random() * 1000));
+        record.put("device_name", devicename);
         record.put("available", "visible");
 
         // Service information.  Pass it an instance name, service type
@@ -431,6 +448,12 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     @Override
     public void applyText(String username) {
+        //Store in SharedPrefs
+        sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(MyPREFERENCES,username);
+        editor.apply();
         useradd.setText(username);
+
     }
 }
