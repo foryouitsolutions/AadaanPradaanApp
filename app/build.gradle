@@ -37,8 +37,7 @@ android {
         androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
         implementation "com.tonyodev.fetch2:fetch2:3.0.10"
-        implementation "com.tonyodev.fetch2fileserver:fetch2fileserver:3.0.10"
-
+        implementation group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
     }
 }
 

@@ -7,17 +7,13 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.BroadcastReceiver;
+import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -29,7 +25,6 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -47,38 +42,44 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.net.wifi.p2p.WifiP2pConfig;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.tonyodev.fetch2.Download;
+import com.tonyodev.fetch2.Error;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
+import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2core.DownloadBlock;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.UUID;
 
-import static android.content.Context.*;
+import fi.iki.elonen.NanoHTTPD;
+import fi.iki.elonen.NanoHTTPD.Response;
 
 public class MainActivity extends AppCompatActivity implements profileDialog.profileDialogListener {
     private static final String TAG = "sdsd";
     Button btnSend, btnReceive;
     TextView useradd ,clientHost;
     private BottomSheetBehavior bottomSheetBehavior;
-    WifiManager manager;
-    private WifiManager.LocalOnlyHotspotReservation mReservation;
 
     private Fetch fetch;
-    BroadcastReceiver mReceiver;
-    IntentFilter mIntentFilter;
     WifiManager wifiManager;
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
@@ -88,7 +89,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     ListView listView;
     public static final String MyPREFERENCES = "MyPrefs" ;
     SharedPreferences sharedPreferences;
-
+    private WebServer server;
+    private Map<String, Uri> files = new HashMap<>();
+    private Map<String, String> downloads = new HashMap<>();
 
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
@@ -170,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         getSupportActionBar().setCustomView(R.layout.custom_actionbar);
 
         //Initializations
+
         btnSend = findViewById(R.id.send);
         btnReceive = findViewById(R.id.receive);
         useradd = findViewById(R.id.search);
@@ -183,7 +187,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         final String devicename = (sharedPreferences.getString(MyPREFERENCES, ""));
         useradd.setText(devicename);
 
-
+        // start webserver
+        server = new WebServer();
 
         //Bottom Sheet
         bottomSheetBehavior = BottomSheetBehavior.from(linearLayout);
@@ -256,81 +261,25 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             @SuppressLint("MissingPermission")
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "Discovering...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Sending...", Toast.LENGTH_SHORT).show();
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-                mManager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
-                mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
+                openFile();
 
-                mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, MainActivity.this);
-                mIntentFilter = new IntentFilter();
-                // Indicates a change in the Wi-Fi P2P status.
-                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-                // Indicates a change in the list of available peers.
-                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-                // Indicates the state of Wi-Fi P2P connectivity has changed.
-                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-                // Indicates this device's details have changed.
-                mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-                Log.d("TAG", "initialWork: done");
-
-                mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Toast.makeText(MainActivity.this, "Discovering Nearby Devices...", Toast.LENGTH_SHORT).show();
-                        handler.postDelayed(runner, 1000);
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        Toast.makeText(MainActivity.this, "Discovering Nearby Devices Failed...", Toast.LENGTH_SHORT).show();
-
-                    }
-                });
             }
         });
         //Receive Button
         btnReceive.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//
-//                wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-//                Toast.makeText(getApplicationContext(), "starting..." + wifiManager.isP2pSupported(), Toast.LENGTH_SHORT).show();
-//                wifiManager.setWifiEnabled(true);
-//                mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-//                mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), null);
-//
-//                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-//
-//                    return;
-//                }
-//                mManager.createGroup(mChannel, new WifiP2pManager.ActionListener() {
-//                    @Override
-//                    public void onSuccess() {
-//                        // Device is ready to accept incoming connections from peers.
-//
-//                        Toast.makeText(MainActivity.this, "hotspot ready", Toast.LENGTH_SHORT).show();
-//                        Log.d(TAG, "hotspot");
-//                        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//                            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-//                            return;
-//                        }
-//
-//                        handler.postDelayed(runner, 1000);
-//
-//
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int reason) {
-//                        Toast.makeText(MainActivity.this, "P2P group creation failed. Retry.",
-//                                Toast.LENGTH_SHORT).show();
-//                        Log.d(TAG, "onFailure: " + reason);
-//                    }
-//                });
-
-                download_request_handler();
+//                download_request_handler();
 
             }
         });
@@ -476,7 +425,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         return (int) (Math.random() * 1000);
     }
 
-    void download_request_handler() {
+    void download_request_handler(String url, String file_name) {
         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
             return;
@@ -486,16 +435,29 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             return;
         }
 
-        File file = new File( "read.pdf");
-        saveToFile(file);
+        File file = new File( file_name);
+        saveToFile(url,file);
     }
 
     final int SAVE_FILE_RESULT_CODE = 15;
+    final int OPEN_FILE_RESULT_CODE = 16;
 
-    void saveToFile(File aFile) {
+    void openFile(){
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        try {
+            startActivityForResult(intent, OPEN_FILE_RESULT_CODE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void saveToFile(String url, File aFile) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.setType("application/octet-stream");
+        intent.setType("*/*");
         intent.putExtra(Intent.EXTRA_TITLE, aFile.getPath());
+        Log.d(TAG, "saveToFile: " + aFile.getPath());
+        downloads.put(aFile.getPath(), url);
         try {
             startActivityForResult(intent, SAVE_FILE_RESULT_CODE);
         } catch (Exception e) {
@@ -509,11 +471,43 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         switch (requestCode) {
             case SAVE_FILE_RESULT_CODE: {
                 if (resultCode == RESULT_OK && data != null && data.getData() != null) {
-                    download_file("https://www.nehruplacemarket.com/price-list/cost-to-cost-price-list.pdf", data.getData(), getApplicationContext());
+                    Uri file = data.getData();
+                    String file_str = file.getPath();
+                    String file_name = file_str.substring(file_str.lastIndexOf('/') + 1);
+                    Log.d(TAG, "onActivityResult: " + file_name + downloads.get(file_name));
+                    download_file(downloads.get(file_name), data.getData(), getApplicationContext());
                 }
                 break;
             }
+
+            case OPEN_FILE_RESULT_CODE:
+                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                    uploadFile(data.getData());
+                }
         }
+    }
+
+    void uploadFile(Uri file_uri){
+        String hash = UUID.randomUUID().toString();
+        files.put(hash, file_uri);
+        Log.d(TAG, "uploadFile: " + hash + file_uri);
+        String get_url = "http://1111:8080/getfiles/?file_name=abcd.txt&file_url=http://192.168.1.7:8080/file/" + hash;
+
+        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(MainActivity.this)
+                .setDownloadConcurrentLimit(3)
+                .build();
+
+        fetch = Fetch.Impl.getInstance(fetchConfiguration);
+        final Request request = new Request(get_url, "/dev/null");
+        request.setPriority(Priority.HIGH);
+        request.setNetworkType(NetworkType.ALL);
+        fetch.enqueue(request, updatedRequest -> {
+            Toast.makeText(MainActivity.this, "Download request sent!", Toast.LENGTH_SHORT).show();
+            //Request was successfully enqueued for download.
+        }, error -> {
+            Toast.makeText(MainActivity.this, "Download error error!" + error.getValue(), Toast.LENGTH_SHORT).show();
+            error.getThrowable().printStackTrace();
+        });
     }
 
     void download_file(String fileURL, Uri file_uri, Context activity) {
@@ -521,9 +515,12 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             OutputStream f = activity.getApplicationContext().getContentResolver().openOutputStream(file_uri);
             FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(activity)
                     .setDownloadConcurrentLimit(3)
+                    .enableFileExistChecks(false)
+                    .enableHashCheck(false)
                     .build();
 
             fetch = Fetch.Impl.getInstance(fetchConfiguration);
+            fetch.addListener(fetchListener);
             final Request request = new Request(fileURL, file_uri);
             request.setPriority(Priority.HIGH);
             request.setNetworkType(NetworkType.ALL);
@@ -541,4 +538,121 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
 
     }
+
+    private class WebServer extends NanoHTTPD {
+
+        public WebServer()
+        {
+            super(8080);
+            try {
+                start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public Response serve(IHTTPSession session) {
+            String url = session.getUri();
+
+            if (url.contains("/getfiles/")) {
+                Map params = session.getParameters();
+                List<String> list = (List<String>) params.get("file_url");
+                String file_url = list.get(0);
+                list = (List<String>) params.get("file_name");
+                String file_name = list.get(0);
+                download_request_handler(file_url, file_name);
+                return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "The requested resource does not exist");
+            } else if (url.contains("/file/")){
+                String hash = url.substring(url.lastIndexOf('/') + 1);
+                Uri file = files.get(hash);
+                FileInputStream fis = null;
+                ContentResolver provider = getApplicationContext().getContentResolver();
+                try {
+                    InputStream inputStream = provider.openInputStream(file);
+                    Response res = newFixedLengthResponse(Response.Status.OK, "*/*", inputStream, inputStream.available());
+                    return res;
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+//                res.addHeader("Content-Disposition", "attachment; filename=\""+fileName+"\"");
+            }
+
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "The requested resource does not exist");
+        }
+    }
+
+    FetchListener fetchListener = new FetchListener() {
+        @Override
+        public void onWaitingNetwork(@NotNull Download download) {
+            Log.d(TAG, "onWaitingNetwork: ");
+        }
+
+        @Override
+        public void onStarted(@NotNull Download download, @NotNull List<? extends DownloadBlock> list, int i) {
+            Log.d(TAG, "onStarted: ");
+        }
+
+        @Override
+        public void onError(@NotNull Download download, @NotNull Error error, @Nullable Throwable throwable) {
+            Log.d(TAG, "onError: ");
+            Log.d(TAG, "onError: " + download.getUrl());
+            error.getThrowable().printStackTrace();
+        }
+
+        @Override
+        public void onDownloadBlockUpdated(@NotNull Download download, @NotNull DownloadBlock downloadBlock, int i) {
+            Log.d(TAG, "onDownloadBlockUpdated: ");
+        }
+
+        @Override
+        public void onAdded(@NotNull Download download) {
+            Log.d(TAG, "onAdded: ");
+        }
+
+        @Override
+        public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
+            Log.d(TAG, "onQueued: " + download.getUrl());
+        }
+
+        @Override
+        public void onCompleted(@NotNull Download download) {
+            Log.d(TAG, "onCompleted: ");
+        }
+
+        @Override
+        public void onProgress(@NotNull Download download, long etaInMilliSeconds, long downloadedBytesPerSecond) {
+            int progress = download.getProgress();
+            Log.d(TAG, "onProgress: " + progress);
+        }
+
+        @Override
+        public void onPaused(@NotNull Download download) {
+            Log.d(TAG, "onPaused: ");
+        }
+
+        @Override
+        public void onResumed(@NotNull Download download) {
+            Log.d(TAG, "onResumed: ");
+        }
+
+        @Override
+        public void onCancelled(@NotNull Download download) {
+            Log.d(TAG, "onCancelled: ");
+        }
+
+        @Override
+        public void onRemoved(@NotNull Download download) {
+            Log.d(TAG, "onRemoved: ");
+        }
+
+        @Override
+        public void onDeleted(@NotNull Download download) {
+            Log.d(TAG, "onDeleted: ");
+        }
+    };
+
+
 }
