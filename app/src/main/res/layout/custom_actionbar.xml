@@ -6,9 +6,9 @@
     android:layout_gravity="center">
 
     <ImageView
-        android:src="@android:drawable/btn_star_big_off"
-        android:layout_width="wrap_content"
-        android:paddingEnd="10dp"
+
+        android:src="@drawable/foreground"
+        android:layout_width="40dp"
         android:layout_height="wrap_content" />
 
     <TextView
@@ -17,7 +17,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:fontFamily="@font/lato_bold"
-        android:text="Coolname"
+        android:text="Divvy"
+
         android:textColor="#232323"
         android:textSize="25dp" />
 

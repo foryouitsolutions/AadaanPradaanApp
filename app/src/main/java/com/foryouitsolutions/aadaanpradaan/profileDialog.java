@@ -25,7 +25,7 @@ public class profileDialog extends AppCompatDialogFragment {
         View view = inflater.inflate(R.layout.profile_dialog,null);
         user = view.findViewById(R.id.user);
         builder.setView(view)
-                .setTitle("Add Username")
+                .setTitle("Your Device Name")
                 .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

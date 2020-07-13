@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -171,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         setContentView(R.layout.activity_main);
         getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
         getSupportActionBar().setCustomView(R.layout.custom_actionbar);
-
+        getSupportActionBar().setElevation(0);
         //Initializations
 
         btnSend = findViewById(R.id.send);
@@ -208,52 +210,52 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         ActionBar.LayoutParams p = new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         p.gravity = Gravity.CENTER;
 
-        //init service button
-        ((Button) findViewById(R.id.service_init)).setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void onClick(View v) {
-                if (wifiManager == null) {
-                    wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-                    mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), new WifiP2pManager.ChannelListener() {
-                        @Override
-                        public void onChannelDisconnected() {
-                            Toast.makeText(MainActivity.this, "Lost connection to P2P channel", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-
-                // make sure wifi is initially on
-                wifiManager.setWifiEnabled(true);
-                // add local service
-                Toast.makeText(getApplicationContext(), "Inciting discovery service...", Toast.LENGTH_SHORT).show();
-                // setup connection listener
-                if (!handler_running) {
-                    handler.post(runner2);
-                    handler_running = true;
-                    startRegistration(mManager, mChannel, "8081" , devicename);
-                }
-
-                // discover nearby Wifi Direct services
-                listView = findViewById(R.id.peerListView);
-                String[] dataArray = new String[1];
-                dataArray[0] = "No devices. Working...";
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
-                listView.setAdapter(adapter);
-
-                Toast.makeText(getApplicationContext(), "Setting listeners...", Toast.LENGTH_SHORT).show();
-                mManager.setDnsSdResponseListeners(mChannel, servListener, txtListener);
-
-                WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance("AadaanPradaanService", "_presence._tcp");
-                mManager.addServiceRequest(mChannel,
-                        serviceRequest,
-                        ActionListenerBuilder("Service discovery properties set...", "Setting service discovery properties to manager failed with code "));
-
-                mManager.discoverServices(mChannel,
-                        ActionListenerBuilder("Discovering services called...", "Adding service to manager failed with code "));
-            }
-        });
+       //init service button
+//        ((Button) findViewById(R.id.service_init)).setOnClickListener(new View.OnClickListener() {
+//            @SuppressLint("MissingPermission")
+//            @Override
+//            public void onClick(View v) {
+//                if (wifiManager == null) {
+//                    wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+//                    mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+//                    mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), new WifiP2pManager.ChannelListener() {
+//                        @Override
+//                        public void onChannelDisconnected() {
+//                            Toast.makeText(MainActivity.this, "Lost connection to P2P channel", Toast.LENGTH_SHORT).show();
+//                        }
+//                    });
+//                }
+//
+//                // make sure wifi is initially on
+//                wifiManager.setWifiEnabled(true);
+//                // add local service
+//                Toast.makeText(getApplicationContext(), "Inciting discovery service...", Toast.LENGTH_SHORT).show();
+//                // setup connection listener
+//                if (!handler_running) {
+//                    handler.post(runner2);
+//                    handler_running = true;
+//                    startRegistration(mManager, mChannel, "8081" , devicename);
+//                }
+//
+//                // discover nearby Wifi Direct services
+//                listView = findViewById(R.id.peerListView);
+//                String[] dataArray = new String[1];
+//                dataArray[0] = "No devices. Working...";
+//                ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
+//                listView.setAdapter(adapter);
+//
+//                Toast.makeText(getApplicationContext(), "Setting listeners...", Toast.LENGTH_SHORT).show();
+//                mManager.setDnsSdResponseListeners(mChannel, servListener, txtListener);
+//
+//                WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance("AadaanPradaanService", "_presence._tcp");
+//                mManager.addServiceRequest(mChannel,
+//                        serviceRequest,
+//                        ActionListenerBuilder("Service discovery properties set...", "Setting service discovery properties to manager failed with code "));
+//
+//                mManager.discoverServices(mChannel,
+//                        ActionListenerBuilder("Discovering services called...", "Adding service to manager failed with code "));
+//            }
+//        });
 
 
         //Send Button

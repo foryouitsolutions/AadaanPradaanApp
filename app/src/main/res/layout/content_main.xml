@@ -39,7 +39,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/search">
         </ListView>
-    
+
     <TextView
         android:id="@+id/clientHost"
         android:layout_width="match_parent"
@@ -48,7 +48,7 @@
         android:layout_marginBottom="8dp"
         android:fontFamily="@font/lato_thin"
         android:gravity="center_horizontal"
-        android:text="Send files with blazing \n fast speed"
+        android:text="Send files with blazing \n fast speeds"
         android:textColor="#303030"
         android:textSize="22sp"
         android:textStyle="bold"
@@ -71,30 +71,31 @@
         app:layout_constraintTop_toBottomOf="@+id/clientHost">
 
 
-        <Button
-            android:id="@+id/service_init"
-            android:layout_width="wrap_content"
-            android:layout_height="60dp"
-            android:backgroundTint="#E4224F"
-            android:drawableLeft="@drawable/ic_baseline_arrow_downward_24"
-            android:drawableTint="#fff"
-            android:fontFamily="@font/lato"
-            android:padding="10dp"
-            android:paddingStart="25dp"
-            android:paddingEnd="30dp"
-            android:text="Init"
-            android:textAllCaps="false"
-            android:textColor="#fff"
-            android:textSize="20dp" />
+<!--        <Button-->
+<!--            android:id="@+id/service_init"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="60dp"-->
+<!--            android:backgroundTint="#E4224F"-->
+<!--            android:drawableLeft="@drawable/ic_baseline_arrow_downward_24"-->
+<!--            android:drawableTint="#fff"-->
+<!--            android:fontFamily="@font/lato"-->
+<!--            android:padding="10dp"-->
+<!--            android:paddingStart="25dp"-->
+<!--            android:paddingEnd="30dp"-->
+<!--            android:text="Init"-->
+<!--            android:textAllCaps="false"-->
+<!--            android:textColor="#fff"-->
+<!--            android:textSize="20dp" />-->
 
         <Button
             android:id="@+id/send"
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
-            android:backgroundTint="#5cb85c"
+            android:layout_height="47dp"
+            android:background="@drawable/gradient_send"
             android:drawableLeft="@drawable/ic_baseline_arrow_upward_24"
             android:drawableTint="#fff"
             android:fontFamily="@font/lato"
+            android:layout_margin="5dp"
             android:padding="10dp"
             android:paddingStart="25dp"
             android:paddingEnd="30dp"
@@ -108,8 +109,8 @@
         <Button
             android:id="@+id/receive"
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
-            android:backgroundTint="#1a73e9"
+            android:layout_height="47dp"
+            android:background="@drawable/gradient"
             android:drawableLeft="@drawable/ic_baseline_arrow_downward_24"
             android:drawableTint="#fff"
             android:fontFamily="@font/lato"
