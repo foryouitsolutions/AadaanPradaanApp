@@ -55,27 +55,36 @@
                         android:layout_marginTop="10dp"
                         android:padding="5dp"
                        >
-                       <TextView
-                           android:id="@+id/device_name"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           android:fontFamily="@font/lato"
-                           android:textSize="20sp"
-                           android:text="Device Name"/>
+<!--                       <TextView-->
+<!--                           android:id="@+id/device_name"-->
+<!--                           android:layout_width="match_parent"-->
+<!--                           android:layout_height="wrap_content"-->
+<!--                           android:fontFamily="@font/lato"-->
+<!--                           android:textSize="20sp"-->
+<!--                           android:text="Device Name"/>-->
 
-                      <TextView
-                          android:id="@+id/file_name"
-                          android:layout_width="match_parent"
-                          android:layout_height="wrap_content"
-                          android:layout_marginTop="10dp"
-                          android:text="File Name" />
+<!--                      <TextView-->
+<!--                          android:id="@+id/file_name"-->
+<!--                          android:layout_width="match_parent"-->
+<!--                          android:layout_height="wrap_content"-->
+<!--                          android:layout_marginTop="10dp"-->
+<!--                          android:text="File Name" />-->
 
-                        <TextView
-                            android:id="@+id/percentage"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:text="% " />
+<!--                        <TextView-->
+<!--                            android:id="@+id/percentage"-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:layout_marginTop="10dp"-->
+<!--                            android:text="% " />-->
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerView"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_marginTop="8dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"/>
 
                     </LinearLayout>
 

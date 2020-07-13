@@ -107,7 +107,7 @@
             tools:layout_editor_absoluteY="455dp" />
 
         <Button
-            android:id="@+id/receive"
+            android:id="@+id/discover"
             android:layout_width="wrap_content"
             android:layout_height="47dp"
             android:background="@drawable/gradient"
@@ -117,7 +117,7 @@
             android:padding="10dp"
             android:paddingStart="25dp"
             android:paddingEnd="30dp"
-            android:text="Receive"
+            android:text="Connect"
             android:textAllCaps="false"
             android:textColor="#fff"
             android:textSize="20dp"
