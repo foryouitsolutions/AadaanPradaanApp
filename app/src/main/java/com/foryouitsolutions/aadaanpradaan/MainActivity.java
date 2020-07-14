@@ -203,6 +203,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     }
 
     void init_discovery() {
+        buddies.clear();
+        buddy_ips.clear();
+        
         if (wifiManager == null) {
             wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -213,6 +216,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 }
             });
         }
+
+
 
         // make sure wifi is initially on
         wifiManager.setWifiEnabled(true);
