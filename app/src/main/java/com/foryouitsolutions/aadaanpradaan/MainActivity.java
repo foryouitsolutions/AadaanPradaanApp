@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -23,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -70,14 +72,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -104,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     boolean handler_running = false;
     final HashMap<String, String> buddies = new HashMap<>();
     HashMap<String, String> buddy_ips = new HashMap<>();
+    HashMap<String, Long> buddy_times = new HashMap<String, Long>();
     ListView listView;
     public static final String MyPREFERENCES = "MyPrefs";
     SharedPreferences sharedPreferences;
@@ -208,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         permissionCheck();
         buddies.clear();
         buddy_ips.clear();
-        
+
         if (wifiManager == null) {
             wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -219,7 +221,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 }
             });
         }
-
 
 
         // make sure wifi is initially on
@@ -251,14 +252,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 ActionListenerBuilder("Service discovery properties set...", "Setting service discovery properties to manager failed with code "));
 
 
-
         mManager.discoverServices(mChannel,
                 ActionListenerBuilder("Looking for nearby devices...", "Adding service to manager failed with code "));
     }
 
     //permission Check
     private void permissionCheck() {
-        PermissionListener permissionListener =new PermissionListener() {
+        PermissionListener permissionListener = new PermissionListener() {
             @Override
             public void onPermissionGranted() {
                 //Toast.makeText(MainActivity.this, "Permission Granted", Toast.LENGTH_SHORT).show();
@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         TedPermission.with(this)
                 .setPermissionListener(permissionListener)
                 .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-                .setPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
+                .setPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
                 .check();
     }
 
@@ -299,14 +299,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         final View yourview = findViewById(R.id.yourview);
         LinearLayout linearLayout = findViewById(R.id.bottom_sheet);
 
-      //  ProgressBar progressBarCircle = findViewById(R.id.progressbarcircle);
+        //  ProgressBar progressBarCircle = findViewById(R.id.progressbarcircle);
 
         //getting SharedPrefs
         sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         devicename = (sharedPreferences.getString(MyPREFERENCES, ""));
-        if(devicename.length() == 0){
+        if (devicename.length() == 0) {
 
-            devicename = getString(R.string.app_name)+ " " + getRandomNo();
+            devicename = getString(R.string.app_name) + " " + getRandomNo();
             sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
 
             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -340,13 +340,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 if (i == BottomSheetBehavior.STATE_EXPANDED) {
 
 
-                        fetch.getDownloadsInGroup(0, downloads -> {
-                            final ArrayList<Download> list = new ArrayList<>(downloads);
-                            Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
-                            for (Download download : list) {
-                                fileAdapter.addDownload(download);
-                            }
-                        }).addListener(fetchListener);
+                    fetch.getDownloadsInGroup(0, downloads -> {
+                        final ArrayList<Download> list = new ArrayList<>(downloads);
+                        Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
+                        for (Download download : list) {
+                            fileAdapter.addDownload(download);
+                        }
+                    }).addListener(fetchListener);
 
                 }
             }
@@ -497,19 +497,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         inflater.inflate(R.menu.profile, menu);
         return true;
     }
-    @Override
-    public void onBackPressed() {
-        new AlertDialog.Builder(this)
-                .setTitle("Exit Divvy?")
-                .setMessage("Are you sure you want to exit?")
-                .setNegativeButton(android.R.string.no, null)
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface arg0, int arg1) {
-                        MainActivity.super.onBackPressed();
-                    }
-                }).create().show();
-    }
 
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
@@ -644,7 +631,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         private boolean update_buddies = false;
 
         protected String doInBackground(String... args) {
-            if(args[0].contains("/peers")){
+            if (args[0].contains("/peers")) {
                 update_buddies = true;
             }
 
@@ -680,13 +667,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
 
         protected void onPostExecute(String result) {
-            if(update_buddies){
+            if (update_buddies && result != null) {
                 updateBuddiesFromText(result);
             }
         }
     }
 
-    void updateBuddiesFromText(String hosts){
+    void updateBuddiesFromText(String hosts) {
         Log.d(TAG, "updateBuddiesFromText: " + hosts);
         Map<String, String> map = new HashMap<String, String>();
         String[] parts = hosts.split("::?");
@@ -694,6 +681,28 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         for (int i = 0; i < parts.length; i += 2) {
             buddy_ips.put(parts[i], parts[i + 1]);
         }
+    }
+
+    public String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
     }
 
     void uploadFile(String hosts, Uri file_uri) {
@@ -709,13 +718,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             return;
         }
 
-        String file_string = file_uri.toString();
-        try {
-            file_string = URLDecoder.decode(file_string, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        String file_name = file_string.substring(file_string.lastIndexOf('/') + 1);
+        String file_name = getFileName(file_uri);
         file_name = file_name.trim();
         String hash = UUID.randomUUID().toString();
         files.put(hash, file_uri);
@@ -794,7 +797,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 }
 
                 try {
-                    if(file == null){
+                    if (file == null) {
                         return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "The requested resource does not exist");
                     }
 
@@ -818,14 +821,19 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 List<String> names = (List<String>) params.get("devicename");
                 Log.d(TAG, "serve:  ping" + names.get(0));
                 buddy_ips.put(names.get(0), ip);
+                Date date = new Date();
+                buddy_times.put(names.get(0), date.getTime());
                 return newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "");
             } else if (url.contains("/peers")) {
                 String hosts = "";
+                Date date = new Date();
                 for (String name : buddy_ips.keySet()) {
-                    if (hosts.length() > 0) {
-                        hosts += "::";
+                    if (date.getTime() - buddy_times.get(name) < 30000) {
+                        if (hosts.length() > 0) {
+                            hosts += "::";
+                        }
+                        hosts += name + ":" + buddy_ips.get(name);
                     }
-                    hosts += name + ":" + buddy_ips.get(name);
                 }
 
                 return newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, hosts);
@@ -838,27 +846,31 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     NanoHTTPD.Response getPartialResponse(String rangeHeader, InputStream fileInputStream, long fileLength) throws IOException {
         String rangeValue = rangeHeader.trim().substring("bytes=".length());
         long start, end;
+        boolean do_trick = false;
         if (rangeValue.startsWith("-")) {
             end = fileLength - 1;
             start = fileLength - 1
                     - Long.parseLong(rangeValue.substring("-".length()));
         } else {
+            do_trick = true;
             String[] range = rangeValue.split("-");
             start = Long.parseLong(range[0]);
             end = range.length > 1 ? Long.parseLong(range[1])
                     : fileLength - 1;
         }
+
         if (end > fileLength - 1) {
             end = fileLength - 1;
         }
-        if(end < 0){
-            end = 1000000;
+
+        if (end < 0 && do_trick) {
+            end = 1000000000;
         }
 
         if (start <= end) {
             long contentLength = end - start + 1;
             fileInputStream.skip(start);
-            NanoHTTPD.Response response =  NanoHTTPD.newChunkedResponse(NanoHTTPD.Response.Status.PARTIAL_CONTENT, "*/*", fileInputStream);
+            NanoHTTPD.Response response = NanoHTTPD.newChunkedResponse(NanoHTTPD.Response.Status.PARTIAL_CONTENT, "*/*", fileInputStream);
             response.addHeader("Content-Length", contentLength + "");
             response.addHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileLength);
             response.addHeader("Content-Type", "*/*");
@@ -955,5 +967,24 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
 
         return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(bottomSheetBehavior != null && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Exit Divvy?")
+                .setMessage("Are you sure you want to exit?")
+                .setNegativeButton(android.R.string.no, null)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        MainActivity.super.onBackPressed();
+                    }
+                }).create().show();
     }
 }
