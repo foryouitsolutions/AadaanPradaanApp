@@ -49,6 +49,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.TedPermission;
 import com.tonyodev.fetch2.AbstractFetchListener;
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Error;
@@ -202,7 +204,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         };
     }
 
+    @SuppressLint("MissingPermission")
     void init_discovery() {
+
+        permissionCheck();
         buddies.clear();
         buddy_ips.clear();
         
@@ -247,13 +252,30 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 serviceRequest,
                 ActionListenerBuilder("Service discovery properties set...", "Setting service discovery properties to manager failed with code "));
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Missing perms...", Toast.LENGTH_SHORT).show();
-            return;
-        }
+
 
         mManager.discoverServices(mChannel,
                 ActionListenerBuilder("Looking for nearby devices...", "Adding service to manager failed with code "));
+    }
+
+    //permission Check
+    private void permissionCheck() {
+        PermissionListener permissionListener =new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+                //Toast.makeText(MainActivity.this, "Permission Granted", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPermissionDenied(List<String> deniedPermissions) {
+                Toast.makeText(MainActivity.this, "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+            }
+        };
+        TedPermission.with(this)
+                .setPermissionListener(permissionListener)
+                .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
+                .setPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
+                .check();
     }
 
     @Override
@@ -347,15 +369,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             @Override
             public void onClick(View v) {
                 Toast.makeText(getApplicationContext(), "Sending...", Toast.LENGTH_SHORT).show();
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
                 openFile();
             }
         });
@@ -454,6 +467,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
     };
 
+    @SuppressLint("MissingPermission")
     private void startRegistration(WifiP2pManager manager, WifiP2pManager.Channel channel, String SERVER_PORT, String devicename) {
         //  Create a string map containing information about your service.
         Map record = new HashMap();
@@ -470,10 +484,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         // Add the local service, sending the service info, network channel,
         // and listener that will be used to indicate success or failure of
         // the request.
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "No permission to location. Failing...", Toast.LENGTH_LONG).show();
-            return;
-        }
+
 
         manager.addLocalService(channel, serviceInfo,
                 ActionListenerBuilder("Added service to manager", "Adding service to manager failed with code ")
@@ -521,14 +532,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     }
 
     void download_request_handler(String url, String file_name) {
-        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getApplicationContext(), "missing perms...", Toast.LENGTH_SHORT).show();
-            return;
-        }
+
 
         File file = new File(file_name);
         saveToFile(url, file);

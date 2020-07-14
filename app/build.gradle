@@ -38,6 +38,7 @@ android {
 
         implementation "com.tonyodev.fetch2:fetch2:3.0.10"
         implementation group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
+        implementation 'gun0912.ted:tedpermission:2.2.3'
     }
 }
 

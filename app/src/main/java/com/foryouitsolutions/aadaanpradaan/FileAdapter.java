@@ -100,7 +100,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
                         //Toast.makeText(context, "Downloaded Path:" + downloadData.download.getFile(), Toast.LENGTH_LONG).show();
                         //Removing Download Log
                         int pos = holder.getAdapterPosition();
-                        Toast.makeText(context,"Removed "+pos , Toast.LENGTH_LONG).show();
+                        Toast.makeText(context,"Removed " , Toast.LENGTH_LONG).show();
                         actionListener.onRemoveDownload(downloadData.download.getId());
                         return;
                     }
