@@ -129,9 +129,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 if (group_clients == -1) {
                     group_clients = 0;
                 }
-                
-                conndev = findViewById(R.id.connectedDevice);
-                conndev.setText(group_clients);
+
+
+                conndev.setText(group_clients + "");
                 host_server = wifiP2pInfo.groupOwnerAddress.getHostAddress();
                 ping_server();
             }
@@ -270,6 +270,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         useradd = findViewById(R.id.search);
         clientHost = findViewById(R.id.clientHost);
         conndev = findViewById(R.id.connectedDevice);
+
         final View yourview = findViewById(R.id.yourview);
         LinearLayout linearLayout = findViewById(R.id.bottom_sheet);
 
@@ -278,7 +279,16 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         //getting SharedPrefs
         sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         devicename = (sharedPreferences.getString(MyPREFERENCES, ""));
-        useradd.setText(devicename);
+        if(devicename.length() == 0){
+
+            devicename = R.string.app_name+ " " + getRandomNo();
+            sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(MyPREFERENCES, devicename);
+            editor.apply();
+        }
+        useradd.setText("Device Name - " + devicename);
 
         // start webserver
         server = new WebServer();
@@ -492,11 +502,12 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     @Override
     public void applyText(String username) {
         //Store in SharedPrefs
+
         sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(MyPREFERENCES, username);
         editor.apply();
-        useradd.setText(username);
+        useradd.setText("Device Name - " + username);
 
     }
 
