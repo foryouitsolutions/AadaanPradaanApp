@@ -45,6 +45,8 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         void onRemoveDownload(int id);
 
         void onRetryDownload(int id);
+
+
     }
     FileAdapter(@NonNull final ActionListener actionListener) {
         this.actionListener = actionListener;
@@ -100,26 +102,30 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         } else {
             holder.downloadedBytesPerSecondTextView.setText(Utils.getDownloadSpeedString(context, downloadData.downloadedBytesPerSecond));
         }
+        holder.actionButton2.setOnClickListener(view->{
+            Toast.makeText(context, "Removed ", Toast.LENGTH_LONG).show();
+            actionListener.onRemoveDownload(downloadData.download.getId());
+            return;
+        });
 
         switch (status) {
             case COMPLETED: {
                 //holder.actionButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_clear_24,0,0,0);
                 holder.actionButton.setText(R.string.view);
                 holder.actionButton.setOnClickListener(view -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        //Toast.makeText(context, "Downloaded Path:" + downloadData.download.getFile(), Toast.LENGTH_LONG).show();
-                        //Removing Download Log
-                        int pos = holder.getAdapterPosition();
-                        Toast.makeText(context,"Removed " , Toast.LENGTH_LONG).show();
-                        actionListener.onRemoveDownload(downloadData.download.getId());
-                        return;
-                    }
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                        Toast.makeText(context, "Downloaded Path:" + downloadData.download.getFile(), Toast.LENGTH_LONG).show();
+//                        return;
+//                    }
                     final File file = new File(downloadData.download.getFile());
                     final Uri uri1 = Uri.fromFile(file);
-                    final Intent share = new Intent(Intent.ACTION_VIEW);
+
+                    final Intent share = new Intent(Intent.ACTION_SEND);
                     share.setDataAndType(uri1, Utils.getMimeType(context, uri1));
                     context.startActivity(share);
                 });
+
+
                 break;
             }
             case FAILED: {
@@ -175,17 +181,20 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
 
 
     }
+    public List<DownloadData> getDownloads(){
+        return downloads;
+    }
 
     public void addDownload(@NonNull final Download download) {
         boolean found = false;
         DownloadData data = null;
         int dataPosition = -1;
         for (int i = 0; i < downloads.size(); i++) {
-            final DownloadData downloadData = downloads.get(i);
-            if (downloadData.id == download.getId()) {
-                data = downloadData;
-                dataPosition = i;
-                found = true;
+                    final DownloadData downloadData = downloads.get(i);
+                    if (downloadData.id == download.getId()) {
+                        data = downloadData;
+                        dataPosition = i;
+                        found = true;
                 break;
             }
         }
@@ -257,6 +266,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         public final ProgressBar progressBar;
         public final TextView progressTextView;
         public final Button actionButton;
+        public final Button actionButton2;
         final TextView timeRemainingTextView;
         final TextView downloadedBytesPerSecondTextView;
 
@@ -269,6 +279,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
             progressBar = itemView.findViewById(R.id.progressBar);
             //progressBarCircle = itemView.findViewById(R.id.progressbarcircle);
             actionButton = itemView.findViewById(R.id.actionButton);
+            actionButton2 = itemView.findViewById(R.id.actionButton2);
             progressTextView = itemView.findViewById(R.id.progress_TextView);
             timeRemainingTextView = itemView.findViewById(R.id.remaining_TextView);
             downloadedBytesPerSecondTextView = itemView.findViewById(R.id.downloadSpeedTextView);

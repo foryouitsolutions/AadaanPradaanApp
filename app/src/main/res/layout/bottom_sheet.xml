@@ -41,8 +41,9 @@
             android:orientation="horizontal"
             >
             <TextView
+
                 android:layout_width="0dp"
-                android:layout_weight="0.5"
+                android:layout_weight="1.4"
                 android:layout_height="wrap_content"
                 android:text="Transfers"
                 android:fontFamily="@font/lato"
@@ -51,23 +52,32 @@
                 android:padding="16dp"
                 android:textStyle="bold"/>
 
-
-                    <TextView
+                    <Button
+                    android:id="@+id/deleteLog"
                     android:layout_width="0dp"
-                    android:layout_weight="0.6"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
-                    android:text="Connected Devices "
-                    android:gravity="end"
+                    android:text="Clear"
                     android:fontFamily="@font/lato"
                     android:textColor="@android:color/black"
-                    style="@style/TextAppearance.AppCompat.Headline"
                     android:textSize="15sp"
                     />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Connected Devices "
+                android:gravity="end"
+                android:fontFamily="@font/lato"
+                android:textColor="@android:color/black"
+                style="@style/TextAppearance.AppCompat.Headline"
+                android:textSize="15sp"
+                />
 
             <TextView
                 android:id="@+id/connectedDevice"
                 android:layout_width="0dp"
-                android:layout_weight="0.2"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:layout_height="wrap_content"
                 android:text="None"
@@ -99,12 +109,12 @@
 
                             android:layout_height="match_parent">
 
-                        <ProgressBar
-                            android:id="@+id/progressbarcircle"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:indeterminateTint="@android:color/holo_orange_dark"
-                            android:layout_gravity="center" />
+<!--                        <ProgressBar-->
+<!--                            android:id="@+id/progressbarcircle"-->
+<!--                            android:layout_width="20dp"-->
+<!--                            android:layout_height="20dp"-->
+<!--                            android:indeterminateTint="@android:color/holo_orange_dark"-->
+<!--                            android:layout_gravity="center" />-->
 
                             <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/recyclerView"

@@ -10,7 +10,7 @@
     <string name="delete_title">Are you sure you want to delete %1$s?</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
-    <string name="view">Remove</string>
+    <string name="view">Share</string>
     <string name="wifiOnly">WiFi Only</string>
     <string name="retry">RETRY</string>
     <string name="start">Start</string>

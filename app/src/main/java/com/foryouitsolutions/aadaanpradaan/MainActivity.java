@@ -6,7 +6,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -37,14 +36,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -66,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -286,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         getSupportActionBar().setElevation(0);
         //Initializations
         FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(MainActivity.this)
-                .setDownloadConcurrentLimit(3)
+                .setDownloadConcurrentLimit(10)
                 .enableFileExistChecks(false)
                 .enableHashCheck(false)
                 .build();
@@ -300,14 +296,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         final View yourview = findViewById(R.id.yourview);
         LinearLayout linearLayout = findViewById(R.id.bottom_sheet);
 
-        ProgressBar progressBarCircle = findViewById(R.id.progressbarcircle);
+      //  ProgressBar progressBarCircle = findViewById(R.id.progressbarcircle);
 
         //getting SharedPrefs
         sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         devicename = (sharedPreferences.getString(MyPREFERENCES, ""));
         if(devicename.length() == 0){
 
-            devicename = R.string.app_name+ " " + getRandomNo();
+            devicename = getString(R.string.app_name)+ " " + getRandomNo();
             sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
 
             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -339,8 +335,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             public void onStateChanged(@NonNull View view, int i) {
 
                 if (i == BottomSheetBehavior.STATE_EXPANDED) {
-                    if (state[0]) {
-                        state[0] = true;
+
+
                         fetch.getDownloadsInGroup(0, downloads -> {
                             final ArrayList<Download> list = new ArrayList<>(downloads);
                             Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
@@ -348,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                                 fileAdapter.addDownload(download);
                             }
                         }).addListener(fetchListener);
-                    }
+
                 }
             }
 
@@ -380,7 +376,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             }
         });
 
-
+        Button btndelete = findViewById(R.id.deleteLog);
+        btndelete.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteDownloads();
+            }
+        });
     }
 
     WifiP2pManager.DnsSdTxtRecordListener txtListener = new WifiP2pManager.DnsSdTxtRecordListener() {
@@ -926,5 +928,15 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     @Override
     public void onRetryDownload(int id) {
         fetch.retry(id);
+    }
+
+
+    public void deleteDownloads(){
+        List<FileAdapter.DownloadData> downloads = fileAdapter.getDownloads();
+        for (int i = 0; i < downloads.size(); i++) {
+
+             FileAdapter.DownloadData downloadData = downloads.get(i);
+            fetch.remove(downloadData.download.getId());
+        }
     }
 }
