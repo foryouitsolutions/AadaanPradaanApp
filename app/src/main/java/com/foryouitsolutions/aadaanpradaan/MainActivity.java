@@ -133,8 +133,20 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                     group_clients = 0;
                 }
 
+                if (group_clients > 0) {
+                    Map<String, String> map = (Map<String, String>) buddy_ips.clone();
+                    map.remove(devicename);
+                    String receiever_name = "";
+                    for (String name : map.keySet()) {
+                        receiever_name = name;
+                        break;
+                    }
 
-                conndev.setText(group_clients + "");
+                    conndev.setText(group_clients + " (" + receiever_name + ")");
+                } else {
+                    conndev.setText(group_clients + "");
+                }
+
                 host_server = wifiP2pInfo.groupOwnerAddress.getHostAddress();
                 ping_server();
             }
@@ -372,14 +384,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
         //Clear All
         ImageView btndelete = findViewById(R.id.deleteLog);
-        btndelete.setOnClickListener(v ->{
-            if(deleteDownloads()){
+        btndelete.setOnClickListener(v -> {
+            if (deleteDownloads()) {
                 Toast.makeText(getApplicationContext(), "Cleared Transfers", Toast.LENGTH_SHORT).show();
-            }else{
+            } else {
                 Toast.makeText(getApplicationContext(), "Nothing to Clear in Transfers", Toast.LENGTH_SHORT).show();
             }
 
-    });
+        });
 
     }
 
@@ -675,7 +687,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     void updateBuddiesFromText(String hosts) {
         Log.d(TAG, "updateBuddiesFromText: " + hosts);
-        Map<String, String> map = new HashMap<String, String>();
         String[] parts = hosts.split("::?");
         buddy_ips.clear();
         for (int i = 0; i < parts.length; i += 2) {
@@ -955,14 +966,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     }
 
 
-    public boolean deleteDownloads(){
+    public boolean deleteDownloads() {
         List<FileAdapter.DownloadData> downloadsNew = fileAdapter.getDownloads();
-        if(downloadsNew.size()==0){
+        if (downloadsNew.size() == 0) {
             return false;
         }
         for (int i = 0; i < downloadsNew.size(); i++) {
 
-             FileAdapter.DownloadData downloadData = downloadsNew.get(i);
+            FileAdapter.DownloadData downloadData = downloadsNew.get(i);
             fetch.remove(downloadData.download.getId());
         }
 
@@ -971,7 +982,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     @Override
     public void onBackPressed() {
-        if(bottomSheetBehavior != null && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+        if (bottomSheetBehavior != null && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             return;
         }
