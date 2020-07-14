@@ -340,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
                 if (i == BottomSheetBehavior.STATE_EXPANDED) {
                     if (state[0]) {
-                        state[0] = false;
+                        state[0] = true;
                         fetch.getDownloadsInGroup(0, downloads -> {
                             final ArrayList<Download> list = new ArrayList<>(downloads);
                             Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
@@ -769,12 +769,29 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 String hash = url.substring(url.lastIndexOf('/') + 1);
                 Log.d(TAG, "serving hash " + hash);
                 Uri file = files.get(hash);
-                FileInputStream fis = null;
                 ContentResolver provider = getApplicationContext().getContentResolver();
+
+                String range = null;
+                Map<String, String> headers = session.getHeaders();
+                for (String key : headers.keySet()) {
+                    Log.d(TAG, "Header for request " + key + ":" + headers.get(key));
+                    if ("range".equals(key)) {
+                        range = headers.get(key);
+                    }
+                }
+
                 try {
+                    if(file == null){
+                        return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "The requested resource does not exist");
+                    }
+
                     InputStream inputStream = provider.openInputStream(file);
-                    Response res = newFixedLengthResponse(Response.Status.OK, "*/*", inputStream, inputStream.available());
-                    return res;
+                    if (range == null) {
+                        return newFixedLengthResponse(Response.Status.OK, "*/*", inputStream, inputStream.available());
+                    } else {
+                        Log.d(TAG, "serve: " + inputStream.available());
+                        return getPartialResponse(range, inputStream, inputStream.available());
+                    }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -802,6 +819,39 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             }
 
             return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "The requested resource does not exist");
+        }
+    }
+
+    NanoHTTPD.Response getPartialResponse(String rangeHeader, InputStream fileInputStream, long fileLength) throws IOException {
+        String rangeValue = rangeHeader.trim().substring("bytes=".length());
+        long start, end;
+        if (rangeValue.startsWith("-")) {
+            end = fileLength - 1;
+            start = fileLength - 1
+                    - Long.parseLong(rangeValue.substring("-".length()));
+        } else {
+            String[] range = rangeValue.split("-");
+            start = Long.parseLong(range[0]);
+            end = range.length > 1 ? Long.parseLong(range[1])
+                    : fileLength - 1;
+        }
+        if (end > fileLength - 1) {
+            end = fileLength - 1;
+        }
+        if(end < 0){
+            end = 1000000;
+        }
+
+        if (start <= end) {
+            long contentLength = end - start + 1;
+            fileInputStream.skip(start);
+            NanoHTTPD.Response response =  NanoHTTPD.newChunkedResponse(NanoHTTPD.Response.Status.PARTIAL_CONTENT, "*/*", fileInputStream);
+            response.addHeader("Content-Length", contentLength + "");
+            response.addHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileLength);
+            response.addHeader("Content-Type", "*/*");
+            return response;
+        } else {
+            return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.RANGE_NOT_SATISFIABLE, "*/*", rangeHeader);
         }
     }
 

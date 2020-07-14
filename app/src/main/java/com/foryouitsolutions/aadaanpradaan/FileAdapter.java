@@ -22,6 +22,8 @@ import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Status;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +70,15 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         final Status status = downloadData.download.getStatus();
         final Context context = holder.itemView.getContext();
 
-        holder.titleTextView.setText(uri.getLastPathSegment());
+        String view_file_name = downloadData.download.getFile();
+        try {
+            view_file_name = URLDecoder.decode(view_file_name, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        view_file_name = view_file_name.substring(view_file_name.lastIndexOf('/') + 1);
+        holder.titleTextView.setText(view_file_name);
         holder.statusTextView.setText(getStatusString(status));
 
         int progress = downloadData.download.getProgress();
