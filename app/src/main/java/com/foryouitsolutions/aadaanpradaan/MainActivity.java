@@ -373,9 +373,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         //Clear All
         ImageView btndelete = findViewById(R.id.deleteLog);
         btndelete.setOnClickListener(v ->{
+            if(deleteDownloads()){
+                Toast.makeText(getApplicationContext(), "Cleared Transfers", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(getApplicationContext(), "Nothing to Clear in Transfers", Toast.LENGTH_SHORT).show();
+            }
 
-            deleteDownloads();
-            Toast.makeText(getApplicationContext(), "Cleared Transfers", Toast.LENGTH_SHORT).show();
+
 
     });
 
@@ -940,13 +944,17 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     }
 
 
-    public void deleteDownloads(){
+    public boolean deleteDownloads(){
         List<FileAdapter.DownloadData> downloadsNew = fileAdapter.getDownloads();
+        if(downloadsNew.size()==0){
+            return false;
+        }
         for (int i = 0; i < downloadsNew.size(); i++) {
 
              FileAdapter.DownloadData downloadData = downloadsNew.get(i);
             fetch.remove(downloadData.download.getId());
         }
 
+        return true;
     }
 }
