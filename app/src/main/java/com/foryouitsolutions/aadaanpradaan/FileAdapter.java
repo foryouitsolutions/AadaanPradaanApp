@@ -1,12 +1,16 @@
 package com.foryouitsolutions.aadaanpradaan;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
 import android.os.Build;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.RecyclerView;
+
 import org.jetbrains.annotations.Nullable;
 
 
@@ -30,7 +34,6 @@ import java.util.List;
 public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
 
 
-
     @NonNull
     private final List<DownloadData> downloads = new ArrayList<>();
     @NonNull
@@ -48,6 +51,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
 
 
     }
+
     FileAdapter(@NonNull final ActionListener actionListener) {
         this.actionListener = actionListener;
     }
@@ -102,7 +106,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         } else {
             holder.downloadedBytesPerSecondTextView.setText(Utils.getDownloadSpeedString(context, downloadData.downloadedBytesPerSecond));
         }
-        holder.actionButton2.setOnClickListener(view->{
+        holder.actionButton2.setOnClickListener(view -> {
             Toast.makeText(context, "Removed ", Toast.LENGTH_LONG).show();
             actionListener.onRemoveDownload(downloadData.download.getId());
             return;
@@ -118,9 +122,11 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
 //                        return;
 //                    }
                     final File file = new File(downloadData.download.getFile());
-                    final Uri uri1 = Uri.fromFile(file);
-
+//                    final Uri uri1 = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", file);
+//                    final Uri uri1 = Uri.fromFile(file);
+                    final Uri uri1 = Uri.parse(downloadData.download.getFile());
                     final Intent share = new Intent(Intent.ACTION_SEND);
+                    share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     share.setDataAndType(uri1, Utils.getMimeType(context, uri1));
                     context.startActivity(share);
                 });
@@ -179,9 +185,9 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         });
 
 
-
     }
-    public List<DownloadData> getDownloads(){
+
+    public List<DownloadData> getDownloads() {
         return downloads;
     }
 
@@ -190,11 +196,11 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         DownloadData data = null;
         int dataPosition = -1;
         for (int i = 0; i < downloads.size(); i++) {
-                    final DownloadData downloadData = downloads.get(i);
-                    if (downloadData.id == download.getId()) {
-                        data = downloadData;
-                        dataPosition = i;
-                        found = true;
+            final DownloadData downloadData = downloads.get(i);
+            if (downloadData.id == download.getId()) {
+                data = downloadData;
+                dataPosition = i;
+                found = true;
                 break;
             }
         }
@@ -270,7 +276,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         final TextView timeRemainingTextView;
         final TextView downloadedBytesPerSecondTextView;
 
-       // public ProgressBar progressBarCircle;
+        // public ProgressBar progressBarCircle;
 
         ViewHolder(View itemView) {
             super(itemView);
