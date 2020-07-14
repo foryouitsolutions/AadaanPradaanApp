@@ -1,5 +1,6 @@
 package com.foryouitsolutions.aadaanpradaan;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -30,6 +32,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.content.Intent.EXTRA_STREAM;
 
 public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHolder> {
 
@@ -121,14 +125,12 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
 //                        Toast.makeText(context, "Downloaded Path:" + downloadData.download.getFile(), Toast.LENGTH_LONG).show();
 //                        return;
 //                    }
-                    final File file = new File(downloadData.download.getFile());
-//                    final Uri uri1 = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", file);
-//                    final Uri uri1 = Uri.fromFile(file);
                     final Uri uri1 = Uri.parse(downloadData.download.getFile());
                     final Intent share = new Intent(Intent.ACTION_SEND);
+                    share.setType(getMimeType(uri1, context));
                     share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    share.setDataAndType(uri1, Utils.getMimeType(context, uri1));
-                    context.startActivity(share);
+                    share.putExtra(EXTRA_STREAM, uri1);
+                    context.startActivity(Intent.createChooser(share, "Share file"));
                 });
 
 
@@ -185,6 +187,20 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         });
 
 
+    }
+
+    public String getMimeType(Uri uri, Context context) {
+        String mimeType = null;
+        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            ContentResolver cr = context.getContentResolver();
+            mimeType = cr.getType(uri);
+        } else {
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri
+                    .toString());
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+                    fileExtension.toLowerCase());
+        }
+        return mimeType;
     }
 
     public List<DownloadData> getDownloads() {
