@@ -30,6 +30,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -89,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     private static final String TAG = "sdsd";
     Button btnSend, btnDiscover;
-    TextView useradd, clientHost;
+    TextView useradd, clientHost,conndev;
     private BottomSheetBehavior bottomSheetBehavior;
 
     private Fetch fetch;
@@ -121,16 +123,21 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 } else if (wifiP2pInfo.groupFormed) {
                     //Toast.makeText(MainActivity.this, "We are connected to a P2P group as client", Toast.LENGTH_SHORT).show();
                 }
-
                 int group_clients = buddy_ips.size() - 1;
-                String status_text = "Connected to " + group_clients;
-                if(group_clients == 1){
-                    status_text += "device";
-                } else {
-                    status_text += "devices";
+                if (group_clients==-1){
+                    group_clients = 0;
+                }else{
+                    group_clients= group_clients;
                 }
 
-                clientHost.setText(status_text);
+//                String status_text = "Connected to " + group_clients;
+//                if(group_clients == 1){
+//                    status_text += "device";
+//                } else {
+//                    status_text += "devices";
+//                }
+
+                conndev.setText(group_clients);
                 host_server = wifiP2pInfo.groupOwnerAddress.getHostAddress();
                 ping_server();
             }
@@ -224,11 +231,17 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
 
         // discover nearby Wifi Direct services
+        Animation scaleUp = AnimationUtils.loadAnimation(this, R.anim.scale_up_fast);
         listView = findViewById(R.id.peerListView);
         String[] dataArray = new String[1];
-        dataArray[0] = "Searching nearby devices...";
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
+        TextView emptyText = (TextView)findViewById(R.id.empty);
+        listView.setEmptyView(emptyText);
+        listView.setAnimation(scaleUp);
+        dataArray[0] = "Searching Nearby Devices...";
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.listview_item, dataArray);
         listView.setAdapter(adapter);
+
+
         mManager.setDnsSdResponseListeners(mChannel, servListener, txtListener);
         WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance("AadaanPradaanService", "_presence._tcp");
         mManager.addServiceRequest(mChannel,
@@ -263,6 +276,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         btnDiscover = findViewById(R.id.discover);
         useradd = findViewById(R.id.search);
         clientHost = findViewById(R.id.clientHost);
+        conndev = findViewById(R.id.connectedDevice);
         final View yourview = findViewById(R.id.yourview);
         LinearLayout linearLayout = findViewById(R.id.bottom_sheet);
 
@@ -275,16 +289,18 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         // start webserver
         server = new WebServer();
 
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+        fileAdapter = new FileAdapter(MainActivity.this);
+        recyclerView.setAdapter(fileAdapter);
+
         //Bottom Sheet
         bottomSheetBehavior = BottomSheetBehavior.from(linearLayout);
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View view, int i) {
                 if(i== BottomSheetBehavior.STATE_EXPANDED){
-                    RecyclerView recyclerView = findViewById(R.id.recyclerView);
-                    recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-                    fileAdapter = new FileAdapter(MainActivity.this);
-                    recyclerView.setAdapter(fileAdapter);
+
                     fetch.getDownloadsInGroup(0, downloads -> {
                         final ArrayList<Download> list = new ArrayList<>(downloads);
                         Collections.sort(list, (first, second) -> Long.compare(first.getCreated(), second.getCreated()));
