@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -35,7 +34,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -43,7 +41,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -362,23 +359,30 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         p.gravity = Gravity.CENTER;
 
         //Send Button
-        btnSend.setOnClickListener(v -> {
-
-            Toast.makeText(getApplicationContext(), "Choose File", Toast.LENGTH_SHORT).show();
-            openFile();
+        btnSend.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("MissingPermission")
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(), "Sending...", Toast.LENGTH_SHORT).show();
+                openFile();
+            }
         });
         //Discover Button
-        btnDiscover.setOnClickListener(v -> init_discovery());
+        btnDiscover.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                init_discovery();
 
-        //Clear All
-        ImageView btndelete = findViewById(R.id.deleteLog);
-        btndelete.setOnClickListener(v ->{
+            }
+        });
 
-            deleteDownloads();
-            Toast.makeText(getApplicationContext(), "Cleared Transfers", Toast.LENGTH_SHORT).show();
-
-    });
-
+        Button btndelete = findViewById(R.id.deleteLog);
+        btndelete.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteDownloads();
+            }
+        });
     }
 
     WifiP2pManager.DnsSdTxtRecordListener txtListener = new WifiP2pManager.DnsSdTxtRecordListener() {
@@ -494,19 +498,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.profile, menu);
         return true;
-    }
-    @Override
-    public void onBackPressed() {
-        new AlertDialog.Builder(this)
-                .setTitle("Exit Divvy?")
-                .setMessage("Are you sure you want to exit?")
-                .setNegativeButton(android.R.string.no, null)
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface arg0, int arg1) {
-                        MainActivity.super.onBackPressed();
-                    }
-                }).create().show();
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -939,14 +930,11 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         fetch.retry(id);
     }
 
-
-    public void deleteDownloads(){
-        List<FileAdapter.DownloadData> downloadsNew = fileAdapter.getDownloads();
-        for (int i = 0; i < downloadsNew.size(); i++) {
-
-             FileAdapter.DownloadData downloadData = downloadsNew.get(i);
+    public void deleteDownloads() {
+        List<FileAdapter.DownloadData> downloads = fileAdapter.getDownloads();
+        for (int i = 0; i < downloads.size(); i++) {
+            FileAdapter.DownloadData downloadData = downloads.get(i);
             fetch.remove(downloadData.download.getId());
         }
-
     }
 }
