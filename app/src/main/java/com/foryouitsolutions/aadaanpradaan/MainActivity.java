@@ -37,6 +37,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -91,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     private static final String TAG = "sdsd";
     Button btnSend, btnDiscover;
-    TextView useradd, clientHost,conndev;
+    TextView useradd, clientHost, conndev;
     private BottomSheetBehavior bottomSheetBehavior;
 
     private Fetch fetch;
@@ -124,10 +125,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                     //Toast.makeText(MainActivity.this, "We are connected to a P2P group as client", Toast.LENGTH_SHORT).show();
                 }
                 int group_clients = buddy_ips.size() - 1;
-                if (group_clients==-1){
+                if (group_clients == -1) {
                     group_clients = 0;
-                }else{
-                    group_clients= group_clients;
+                } else {
+                    group_clients = group_clients;
                 }
 
 //                String status_text = "Connected to " + group_clients;
@@ -196,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         return new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Log.d(TAG, "onSuccess: "+ text);
+                Log.d(TAG, "onSuccess: " + text);
 
             }
 
@@ -234,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         Animation scaleUp = AnimationUtils.loadAnimation(this, R.anim.scale_up_fast);
         listView = findViewById(R.id.peerListView);
         String[] dataArray = new String[1];
-        TextView emptyText = (TextView)findViewById(R.id.empty);
+        TextView emptyText = (TextView) findViewById(R.id.empty);
         listView.setEmptyView(emptyText);
         listView.setAnimation(scaleUp);
         dataArray[0] = "Searching Nearby Devices...";
@@ -271,7 +272,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 .enableHashCheck(false)
                 .build();
         fetch = Fetch.Impl.getInstance(fetchConfiguration);
-
         btnSend = findViewById(R.id.send);
         btnDiscover = findViewById(R.id.discover);
         useradd = findViewById(R.id.search);
@@ -280,6 +280,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         final View yourview = findViewById(R.id.yourview);
         LinearLayout linearLayout = findViewById(R.id.bottom_sheet);
 
+        ProgressBar progressBarCircle = findViewById(R.id.progressbarcircle);
 
         //getting SharedPrefs
         sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
@@ -290,24 +291,35 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         server = new WebServer();
 
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setVisibility(View.GONE);
+
+
         recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
         fileAdapter = new FileAdapter(MainActivity.this);
         recyclerView.setAdapter(fileAdapter);
+
+
+        fileAdapter.notifyDataSetChanged();
+        recyclerView.setVisibility(View.VISIBLE);
+        final boolean[] state = {true};
 
         //Bottom Sheet
         bottomSheetBehavior = BottomSheetBehavior.from(linearLayout);
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View view, int i) {
-                if(i== BottomSheetBehavior.STATE_EXPANDED){
 
-                    fetch.getDownloadsInGroup(0, downloads -> {
-                        final ArrayList<Download> list = new ArrayList<>(downloads);
-                        Collections.sort(list, (first, second) -> Long.compare(first.getCreated(), second.getCreated()));
-                        for (Download download : list) {
-                            fileAdapter.addDownload(download);
-                        }
-                    }).addListener(fetchListener);
+                if (i == BottomSheetBehavior.STATE_EXPANDED) {
+                    if (state[0]) {
+                        state[0] = false;
+                        fetch.getDownloadsInGroup(0, downloads -> {
+                            final ArrayList<Download> list = new ArrayList<>(downloads);
+                            Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
+                            for (Download download : list) {
+                                fileAdapter.addDownload(download);
+                            }
+                        }).addListener(fetchListener);
+                    }
                 }
             }
 
@@ -405,9 +417,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
     };
 
-    String GetPreparedDeviceName(String device_name){
-        for(String name: buddy_ips.keySet()){
-            if(name.equals(device_name)){
+    String GetPreparedDeviceName(String device_name) {
+        for (String name : buddy_ips.keySet()) {
+            if (name.equals(device_name)) {
                 return "[Connected] " + device_name;
             }
         }
@@ -531,7 +543,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         intent.setType("*/*");
         intent.putExtra(Intent.EXTRA_TITLE, aFile.getPath());
         Log.d(TAG, "saveToFile: " + aFile.getPath());
-        download_file_url= url;
+        download_file_url = url;
         try {
             startActivityForResult(intent, SAVE_FILE_RESULT_CODE);
         } catch (Exception e) {

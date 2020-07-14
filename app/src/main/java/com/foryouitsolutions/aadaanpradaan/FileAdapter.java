@@ -78,6 +78,7 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         holder.progressBar.setProgress(progress);
         holder.progressTextView.setText(context.getString(R.string.percent_progress, progress));
 
+
         if (downloadData.eta == -1) {
             holder.timeRemainingTextView.setText("");
         } else {
@@ -92,10 +93,15 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
 
         switch (status) {
             case COMPLETED: {
+                //holder.actionButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_clear_24,0,0,0);
                 holder.actionButton.setText(R.string.view);
                 holder.actionButton.setOnClickListener(view -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        Toast.makeText(context, "Downloaded Path:" + downloadData.download.getFile(), Toast.LENGTH_LONG).show();
+                        //Toast.makeText(context, "Downloaded Path:" + downloadData.download.getFile(), Toast.LENGTH_LONG).show();
+                        //Removing Download Log
+                        int pos = holder.getAdapterPosition();
+                        Toast.makeText(context,"Removed "+pos , Toast.LENGTH_LONG).show();
+                        actionListener.onRemoveDownload(downloadData.download.getId());
                         return;
                     }
                     final File file = new File(downloadData.download.getFile());
@@ -155,6 +161,8 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
 
             return true;
         });
+
+
 
     }
 
@@ -242,11 +250,14 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         final TextView timeRemainingTextView;
         final TextView downloadedBytesPerSecondTextView;
 
+       // public ProgressBar progressBarCircle;
+
         ViewHolder(View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.titleTextView);
             statusTextView = itemView.findViewById(R.id.status_TextView);
             progressBar = itemView.findViewById(R.id.progressBar);
+            //progressBarCircle = itemView.findViewById(R.id.progressbarcircle);
             actionButton = itemView.findViewById(R.id.actionButton);
             progressTextView = itemView.findViewById(R.id.progress_TextView);
             timeRemainingTextView = itemView.findViewById(R.id.remaining_TextView);
