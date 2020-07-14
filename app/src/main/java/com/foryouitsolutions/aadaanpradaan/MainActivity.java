@@ -363,7 +363,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
         //Send Button
         btnSend.setOnClickListener(v -> {
-            
+
             Toast.makeText(getApplicationContext(), "Choose File", Toast.LENGTH_SHORT).show();
             openFile();
         });
