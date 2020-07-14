@@ -382,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             buddies.put(GetPreparedDeviceName(device_name), device_address);
 
             String[] dataArray = buddies.keySet().toArray(new String[0]);
-            ArrayAdapter adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, dataArray);
+            ArrayAdapter adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.listview_item, dataArray);
             listView.setAdapter(adapter);
             listView.setOnItemLongClickListener(connectPeer);
         }
