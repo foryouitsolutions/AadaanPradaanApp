@@ -62,6 +62,7 @@ import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
+import com.tonyodev.fetch2.Status;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -972,9 +973,19 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             return false;
         }
         for (int i = 0; i < downloadsNew.size(); i++) {
-
             FileAdapter.DownloadData downloadData = downloadsNew.get(i);
-            fetch.remove(downloadData.download.getId());
+            switch (downloadData.download.getStatus()){
+                case COMPLETED:
+                case PAUSED:
+                case QUEUED:
+                case ADDED:
+                case DOWNLOADING:
+                case NONE:
+                    break;
+
+                default:
+                    fetch.remove(downloadData.download.getId());
+            }
         }
 
         return true;
