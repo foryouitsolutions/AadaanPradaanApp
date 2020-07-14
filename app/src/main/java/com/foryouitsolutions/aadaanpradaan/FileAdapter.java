@@ -132,8 +132,6 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
                     share.putExtra(EXTRA_STREAM, uri1);
                     context.startActivity(Intent.createChooser(share, "Share file"));
                 });
-
-
                 break;
             }
             case FAILED: {
