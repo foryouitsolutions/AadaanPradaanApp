@@ -141,9 +141,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     };
 
     void ping_server() {
-        String get_url = "http://" + host_server + ":8080/ping/?devicename=" + devicename;
-        new FetchURL().execute(new String[]{get_url});
-//        Log.d(TAG, "ping_server: " + get_url);
+        new FetchURL().execute(new String[]{"http://" + host_server + ":8080/ping/?devicename=" + devicename});
+        new FetchURL().execute(new String[]{"http://" + host_server + ":8080/peers"});
     }
 
     WifiP2pManager.PeerListListener peerlistener = new WifiP2pManager.PeerListListener() {
@@ -629,7 +628,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
 
     private class FetchURL extends AsyncTask<String, Integer, String> {
+        private boolean update_buddies = false;
+
         protected String doInBackground(String... args) {
+            if(args[0].contains("/peers")){
+                update_buddies = true;
+            }
+
             URL url = null;
             try {
                 url = new URL(args[0]);
@@ -662,6 +667,19 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
 
         protected void onPostExecute(String result) {
+            if(update_buddies){
+                updateBuddiesFromText(result);
+            }
+        }
+    }
+
+    void updateBuddiesFromText(String hosts){
+        Log.d(TAG, "updateBuddiesFromText: " + hosts);
+        Map<String, String> map = new HashMap<String, String>();
+        String[] parts = hosts.split("::?");
+        buddy_ips.clear();
+        for (int i = 0; i < parts.length; i += 2) {
+            buddy_ips.put(parts[i], parts[i + 1]);
         }
     }
 
