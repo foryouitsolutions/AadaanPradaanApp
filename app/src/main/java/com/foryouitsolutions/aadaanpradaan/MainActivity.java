@@ -124,20 +124,13 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 } else if (wifiP2pInfo.groupFormed) {
                     //Toast.makeText(MainActivity.this, "We are connected to a P2P group as client", Toast.LENGTH_SHORT).show();
                 }
+
                 int group_clients = buddy_ips.size() - 1;
                 if (group_clients == -1) {
                     group_clients = 0;
-                } else {
-                    group_clients = group_clients;
                 }
-
-//                String status_text = "Connected to " + group_clients;
-//                if(group_clients == 1){
-//                    status_text += "device";
-//                } else {
-//                    status_text += "devices";
-//                }
-
+                
+                conndev = findViewById(R.id.connectedDevice);
                 conndev.setText(group_clients);
                 host_server = wifiP2pInfo.groupOwnerAddress.getHostAddress();
                 ping_server();
