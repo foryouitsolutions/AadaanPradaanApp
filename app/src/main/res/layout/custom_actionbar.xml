@@ -17,8 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:fontFamily="@font/lato_bold"
-        android:text="Divvy"
-
+        android:text="@string/app_name"
         android:textColor="#232323"
         android:textSize="25dp" />
 
