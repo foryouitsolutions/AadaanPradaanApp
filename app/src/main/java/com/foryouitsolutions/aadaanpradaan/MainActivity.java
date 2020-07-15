@@ -127,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
-//            final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
             if (wifiP2pInfo.groupFormed) {
                 if (wifiP2pInfo.isGroupOwner) {
                     //Toast.makeText(MainActivity.this, "We are connected to a P2P group as host", Toast.LENGTH_SHORT).show();
@@ -135,27 +134,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                     //Toast.makeText(MainActivity.this, "We are connected to a P2P group as client", Toast.LENGTH_SHORT).show();
                 }
 
-                int group_clients = buddy_ips.size() - 1;
-                if (group_clients == -1) {
-                    group_clients = 0;
-                }
-
-                if (group_clients > 0) {
-                    Map<String, String> map = (Map<String, String>) buddy_ips.clone();
-                    map.remove(devicename);
-                    String receiever_name = "";
-                    for (String name : map.keySet()) {
-                        receiever_name = name;
-                        break;
-                    }
-
-                    conndev.setText(group_clients + " (" + receiever_name + ")");
-                } else {
-                    conndev.setText(group_clients + "");
-                }
-
                 host_server = wifiP2pInfo.groupOwnerAddress.getHostAddress();
-                ping_server();
             }
         }
     };
@@ -202,7 +181,30 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         @SuppressLint("MissingPermission")
         @Override
         public void run() {
+            int group_clients = buddy_ips.size() - 1;
+            if (group_clients == -1) {
+                group_clients = 0;
+            }
+
+            if (group_clients > 0) {
+                Map<String, String> map = (Map<String, String>) buddy_ips.clone();
+                map.remove(devicename);
+                String receiever_name = "";
+                for (String name : map.keySet()) {
+                    receiever_name = name;
+                    break;
+                }
+
+                conndev.setText(group_clients + " (" + receiever_name + ")");
+            } else {
+                conndev.setText(group_clients + "");
+            }
+
             mManager.requestConnectionInfo(mChannel, connectionInfoListener);
+            if(host_server != null){
+                ping_server();
+            }
+
             handler.postDelayed(this, 5000);
         }
     };
@@ -680,6 +682,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 return content;
             } catch (IOException e) {
                 e.printStackTrace();
+                buddy_ips.clear();
             }
 
             return null;
