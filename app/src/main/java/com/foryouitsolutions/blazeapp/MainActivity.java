@@ -377,7 +377,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         //Discover Button
         btnDiscover.setOnClickListener(v -> init_discovery());
 
-        //Clear All
+        //
+        // All
         ImageView btndelete = findViewById(R.id.deleteLog);
         btndelete.setOnClickListener(v -> {
             if (deleteDownloads()) {
@@ -976,7 +977,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         for (int i = 0; i < downloadsNew.size(); i++) {
             FileAdapter.DownloadData downloadData = downloadsNew.get(i);
             switch (downloadData.download.getStatus()){
-                case COMPLETED:
                 case PAUSED:
                 case QUEUED:
                 case ADDED:
