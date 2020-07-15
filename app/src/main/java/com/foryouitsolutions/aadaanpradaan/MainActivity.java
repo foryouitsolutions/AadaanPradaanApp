@@ -2,10 +2,6 @@ package com.foryouitsolutions.aadaanpradaan;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -18,7 +14,6 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
-import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
@@ -52,8 +47,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.TaskStackBuilder;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -69,7 +62,6 @@ import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.NetworkType;
 import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
-import com.tonyodev.fetch2.Status;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -229,10 +221,11 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     @SuppressLint("MissingPermission")
     void init_discovery() {
-
         permissionCheck();
         buddies.clear();
         buddy_ips.clear();
+
+        ((TextView) findViewById(R.id.empty)).setText("Long press on the device name to connect to it");
 
         if (wifiManager == null) {
             wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
@@ -260,8 +253,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         Animation scaleUp = AnimationUtils.loadAnimation(this, R.anim.scale_up_fast);
         listView = findViewById(R.id.peerListView);
         String[] dataArray = new String[1];
-        TextView emptyText = (TextView) findViewById(R.id.empty);
-        listView.setEmptyView(emptyText);
+//        TextView emptyText = (TextView) findViewById(R.id.empty);
+//        listView.setEmptyView(emptyText);
         listView.setAnimation(scaleUp);
         dataArray[0] = "Searching Nearby Devices...";
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.listview_item, dataArray);
