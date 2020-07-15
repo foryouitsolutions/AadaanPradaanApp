@@ -90,6 +90,10 @@ public final class FileAdapter extends RecyclerView.Adapter<FileAdapter.ViewHold
         }
 
         view_file_name = view_file_name.substring(view_file_name.lastIndexOf('/') + 1);
+        if(view_file_name.length() > 29){
+            view_file_name = view_file_name.substring(0, Math.min(view_file_name.length(), 30)) + "...";
+        }
+
         holder.titleTextView.setText(view_file_name);
         holder.statusTextView.setText(getStatusString(status));
 
