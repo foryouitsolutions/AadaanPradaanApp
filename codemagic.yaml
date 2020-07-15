@@ -4,6 +4,7 @@ workflows:
     android-app:
         name: Android App
         scripts:
+            - chmod +x gradlew
             - ./gradlew assembleDebug
         artifacts:
             - build/outputs/**/**/*.apk
