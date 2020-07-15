@@ -6,6 +6,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -156,26 +157,27 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
     };
 
-    Runnable runner = new Runnable() {
-        @SuppressLint("MissingPermission")
-        @Override
-        public void run() {
-            mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
-                @Override
-                public void onGroupInfoAvailable(WifiP2pGroup group) {
-                    if (group == null) {
-                        Log.d(TAG, "onGroupInfoAvailable: no group!");
-                        return;
-                    }
-                    String groupPassword = group.getPassphrase();
-                    Log.d(TAG, "LOGGG" + groupPassword + group.getNetworkName());
-                }
-            });
-            mManager.requestPeers(mChannel, peerlistener);
-            handler.postDelayed(this, 5000);
-        }
-    };
+    Runnable download_runner(ClipData clipData) {
+        return () -> {
+            if (host_server.length() == 0) {
+                return;
+            }
 
+            if (clipData == null) {
+                return;
+            }
+
+            for (int i = 0; i < clipData.getItemCount(); i++) {
+                ClipData.Item item = clipData.getItemAt(i);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        new GetUrlContentTask().execute(new Object[]{"http://" + host_server + ":8080/peers", item.getUri()});
+                    }
+                }, i * 5000);
+            }
+        };
+    }
 
     Runnable runner2 = new Runnable() {
         @SuppressLint("MissingPermission")
@@ -326,7 +328,6 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         devicename = (sharedPreferences.getString(MyPREFERENCES, ""));
         if (devicename.length() == 0) {
-
             devicename = getString(R.string.app_name) + " " + getRandomNo();
             sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
 
@@ -334,23 +335,11 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             editor.putString(MyPREFERENCES, devicename);
             editor.apply();
         }
+
         useradd.setText("Device Name - " + devicename);
 
         // start webserver
         server = new WebServer();
-
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setVisibility(View.GONE);
-
-
-        recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        fileAdapter = new FileAdapter(MainActivity.this);
-        recyclerView.setAdapter(fileAdapter);
-
-
-        fileAdapter.notifyDataSetChanged();
-        recyclerView.setVisibility(View.VISIBLE);
-        final boolean[] state = {true};
 
         //Bottom Sheet
         bottomSheetBehavior = BottomSheetBehavior.from(linearLayout);
@@ -359,6 +348,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             public void onStateChanged(@NonNull View view, int i) {
 
                 if (i == BottomSheetBehavior.STATE_EXPANDED) {
+                    RecyclerView recyclerView = findViewById(R.id.recyclerView);
+                    recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+                    fileAdapter = new FileAdapter(MainActivity.this);
+                    recyclerView.setAdapter(fileAdapter);
 
 
                     fetch.getDownloadsInGroup(0, downloads -> {
@@ -541,12 +534,12 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     @Override
     public void applyText(String username) {
         //Store in SharedPrefs
-
         sharedPreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(MyPREFERENCES, username);
         editor.apply();
         useradd.setText("Device Name - " + username);
+        devicename = username;
 
     }
 
@@ -567,6 +560,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     void openFile() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         try {
             startActivityForResult(intent, OPEN_FILE_RESULT_CODE);
         } catch (Exception e) {
@@ -605,6 +599,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             case OPEN_FILE_RESULT_CODE:
                 if (resultCode == RESULT_OK && data != null && data.getData() != null) {
                     new GetUrlContentTask().execute(new Object[]{"http://" + host_server + ":8080/peers", data.getData()});
+                } else if(resultCode == RESULT_OK && data.getClipData() != null){
+                    handler.post(download_runner(data.getClipData()));
                 }
         }
     }
@@ -804,7 +800,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 list = (List<String>) params.get("file_name");
                 String file_name = list.get(0);
                 download_request_handler(file_url, file_name);
-                return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "The requested resource does not exist");
+                return newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "");
             } else if (url.contains("/file/")) {
                 String hash = url.substring(url.lastIndexOf('/') + 1);
                 Log.d(TAG, "serving hash " + hash);
