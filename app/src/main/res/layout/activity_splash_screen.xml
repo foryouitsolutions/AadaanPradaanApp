@@ -8,38 +8,29 @@
     android:background="@color/colorPrimary"
     tools:context=".SplashScreen">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="32dp"
-        android:gravity="center_horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:src="@drawable/foreground"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.33">
-
-        <ImageView
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:src="@drawable/foreground" />
-
-    </LinearLayout>
+        app:layout_constraintVertical_bias="0.319" />
 
     <LinearLayout
+        android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:layout_marginLeft="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
         app:layout_constraintVertical_bias="1.0">
 
         <TextView
@@ -49,11 +40,11 @@
             android:layout_marginBottom="35dp"
             android:layout_weight="1"
             android:fontFamily="@font/lato_thin"
-            android:textStyle="bold"
-            android:textColor="@color/colorBlack"
             android:gravity="end"
             android:text="Made with"
-            android:textSize="20sp" />
+            android:textColor="@color/colorBlack"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <ImageView
             android:layout_width="20dp"
@@ -72,11 +63,11 @@
             android:layout_marginBottom="35dp"
             android:layout_weight="1"
             android:fontFamily="@font/lato_thin"
-            android:textStyle="bold"
-            android:textColor="@color/colorBlack"
             android:gravity="left"
             android:text="in India"
-            android:textSize="20sp" />
+            android:textColor="@color/colorBlack"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
 
     </LinearLayout>
