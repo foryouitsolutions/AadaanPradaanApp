@@ -2,6 +2,10 @@ package com.foryouitsolutions.aadaanpradaan;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -47,6 +51,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.TaskStackBuilder;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -395,6 +401,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         });
 
     }
+
+
+
 
     WifiP2pManager.DnsSdTxtRecordListener txtListener = new WifiP2pManager.DnsSdTxtRecordListener() {
         @Override
@@ -757,10 +766,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             request.setNetworkType(NetworkType.ALL);
             request.setGroupId(0);
             fetch.enqueue(request, updatedRequest -> {
-                Toast.makeText(activity, "Download completed!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, "Starting Transfer", Toast.LENGTH_SHORT).show();
                 //Request was successfully enqueued for download.
             }, error -> {
-                Toast.makeText(activity, "Download error!" + error.getValue(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, "Transfer Error!" + error.getValue(), Toast.LENGTH_SHORT).show();
                 error.getThrowable().printStackTrace();
             });
         } catch (Exception e) {
@@ -1009,4 +1018,5 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                     }
                 }).create().show();
     }
+
 }
