@@ -1,6 +1,5 @@
 <resources>
-    <string name="app_name">Divvy</string>
-
+    <string name="app_name">Blaze</string>
 
     <string name="pause">PAUSE</string>
     <string name="resume">RESUME</string>
