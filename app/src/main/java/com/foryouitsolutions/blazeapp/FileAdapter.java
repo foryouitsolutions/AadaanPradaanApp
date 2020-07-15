@@ -1,17 +1,12 @@
-package com.foryouitsolutions.aadaanpradaan;
+package com.foryouitsolutions.blazeapp;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
-import android.os.Build;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +24,6 @@ import android.widget.Toast;
 import com.tonyodev.fetch2.Download;
 import com.tonyodev.fetch2.Status;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;

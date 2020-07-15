@@ -1,4 +1,4 @@
-package com.foryouitsolutions.aadaanpradaan;
+package com.foryouitsolutions.blazeapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 

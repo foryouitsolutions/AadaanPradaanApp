@@ -1,9 +1,8 @@
-package com.foryouitsolutions.aadaanpradaan;
+package com.foryouitsolutions.blazeapp;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
-import org.jetbrains.annotations.Nullable;
 import android.webkit.MimeTypeMap;
 import androidx.annotation.NonNull;
 import java.io.File;

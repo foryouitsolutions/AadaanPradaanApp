@@ -1,4 +1,4 @@
-package com.foryouitsolutions.aadaanpradaan;
+package com.foryouitsolutions.blazeapp;
 
 import org.junit.Test;
 
