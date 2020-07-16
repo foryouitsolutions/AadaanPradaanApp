@@ -136,21 +136,14 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     };
 
     void ping_server() {
+        if (!handler_running) {
+            buddy_ips.clear();
+            return;
+        }
+
         new FetchURL().execute(new String[]{"http://" + host_server + ":8080/ping/?devicename=" + devicename});
         new FetchURL().execute(new String[]{"http://" + host_server + ":8080/peers"});
     }
-
-    WifiP2pManager.PeerListListener peerlistener = new WifiP2pManager.PeerListListener() {
-        @Override
-        public void onPeersAvailable(WifiP2pDeviceList peers) {
-            Collection<WifiP2pDevice> list = peers.getDeviceList();
-            Iterator<WifiP2pDevice> i = list.iterator();
-            while (i.hasNext()) {
-                WifiP2pDevice device = i.next();
-                Log.d(TAG, "onPeersAvailable: " + device.deviceAddress + device.deviceName);
-            }
-        }
-    };
 
     Runnable download_runner(ClipData clipData) {
         return () -> {
@@ -195,11 +188,19 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 conndev.setText(group_clients + " (" + receiever_name + ")");
             } else {
                 conndev.setText(group_clients + "");
+                btnDiscover.setText("Connect");
             }
 
             mManager.requestConnectionInfo(mChannel, connectionInfoListener);
-            if(host_server != null){
+            if (host_server != null) {
+                if (buddy_ips.size() > 1) {
+                    btnDiscover.setText("Disconnect");
+                }
+
                 ping_server();
+
+            } else {
+                btnDiscover.setText("Connect");
             }
 
             handler.postDelayed(this, 5000);
@@ -358,12 +359,28 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
         //Send Button
         btnSend.setOnClickListener(v -> {
+            if (!handler_running) {
+                Toast.makeText(this, "Please connect first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (buddy_ips.size() < 2) {
+                Toast.makeText(this, "You cannot send files without at least one connected devices", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             Toast.makeText(getApplicationContext(), "Choose File", Toast.LENGTH_SHORT).show();
             openFile();
         });
         //Discover Button
-        btnDiscover.setOnClickListener(v -> init_discovery());
+        btnDiscover.setOnClickListener(v -> {
+            if (((Button) v).getText().toString().contains("Disconnect")) {
+                remove_discovery();
+                return;
+            }
+
+            init_discovery();
+        });
 
         //
         // All
@@ -379,7 +396,26 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
     }
 
+    private void remove_discovery() {
+        Toast.makeText(this, "Disconnecting...", Toast.LENGTH_SHORT).show();
+        if (wifiManager == null) {
+            wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+            mChannel = mManager.initialize(getApplicationContext(), getMainLooper(), new WifiP2pManager.ChannelListener() {
+                @Override
+                public void onChannelDisconnected() {
+                    Toast.makeText(MainActivity.this, "Lost connection to P2P channel", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
+        mManager.cancelConnect(mChannel, null);
+        mManager.clearLocalServices(mChannel, null);
+        mManager.clearServiceRequests(mChannel, null);
+        mManager.stopPeerDiscovery(mChannel, null);
+        host_server = null;
+        handler_running = false;
+    }
 
 
     WifiP2pManager.DnsSdTxtRecordListener txtListener = new WifiP2pManager.DnsSdTxtRecordListener() {
@@ -504,7 +540,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 profile();
                 return true;
             case R.id.setDirectory:
-                Toast.makeText(this, "Select Transfer Folder", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Select Receive Folder", Toast.LENGTH_LONG).show();
                 selectDir();
                 return true;
             case R.id.about:
@@ -521,7 +557,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     }
 
     private void selectDir() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             i.addCategory(Intent.CATEGORY_DEFAULT);
             startActivityForResult(Intent.createChooser(i, "Choose directory"), 9999);
@@ -601,10 +637,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             case OPEN_FILE_RESULT_CODE:
                 if (resultCode == RESULT_OK && data != null && data.getData() != null) {
                     new GetUrlContentTask().execute(new Object[]{"http://" + host_server + ":8080/peers", data.getData()});
-                } else if(resultCode == RESULT_OK && data.getClipData() != null){
+                } else if (resultCode == RESULT_OK && data.getClipData() != null) {
                     handler.post(download_runner(data.getClipData()));
                 }
-             break;
+                break;
             case 9999:
                 Log.i("Test", "Result URI " + data.getData());
                 break;
@@ -694,7 +730,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
 
         protected void onPostExecute(String result) {
-            if (update_buddies && result != null) {
+            if (update_buddies && result != null && result.length() > 0) {
                 updateBuddiesFromText(result);
             }
         }
@@ -816,7 +852,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 String range = null;
                 Map<String, String> headers = session.getHeaders();
                 for (String key : headers.keySet()) {
-                    Log.d(TAG, "Header for request " + key + ":" + headers.get(key));
+//                    Log.d(TAG, "Header for request " + key + ":" + headers.get(key));
                     if ("range".equals(key)) {
                         range = headers.get(key);
                     }
@@ -988,7 +1024,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
         for (int i = 0; i < downloadsNew.size(); i++) {
             FileAdapter.DownloadData downloadData = downloadsNew.get(i);
-            switch (downloadData.download.getStatus()){
+            switch (downloadData.download.getStatus()) {
                 case PAUSED:
                 case QUEUED:
                 case ADDED:
