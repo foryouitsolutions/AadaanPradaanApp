@@ -335,35 +335,20 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         server = new WebServer();
 
         //Bottom Sheet
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+        fileAdapter = new FileAdapter(MainActivity.this);
+        recyclerView.setAdapter(fileAdapter);
+        recyclerView.setVisibility(View.VISIBLE);
+        fetch.getDownloadsInGroup(0, downloads -> {
+            final ArrayList<Download> list = new ArrayList<>(downloads);
+            Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
+            for (Download download : list) {
+                fileAdapter.addDownload(download);
+            }
+        }).addListener(fetchListener);
+
         bottomSheetBehavior = BottomSheetBehavior.from(linearLayout);
-        bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View view, int i) {
-
-                if (i == BottomSheetBehavior.STATE_EXPANDED) {
-                    RecyclerView recyclerView = findViewById(R.id.recyclerView);
-                    recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-                    fileAdapter = new FileAdapter(MainActivity.this);
-                    recyclerView.setAdapter(fileAdapter);
-
-
-                    fetch.getDownloadsInGroup(0, downloads -> {
-                        final ArrayList<Download> list = new ArrayList<>(downloads);
-                        Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
-                        for (Download download : list) {
-                            fileAdapter.addDownload(download);
-                        }
-                    }).addListener(fetchListener);
-
-                }
-            }
-
-            @Override
-            public void onSlide(@NonNull View view, float v) {
-                yourview.setRotation(v * 180);
-            }
-        });
-
         //Custom Action Bar
         ActionBar.LayoutParams p = new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         p.gravity = Gravity.CENTER;
@@ -837,7 +822,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 buddy_ips.put(names.get(0), ip);
                 Date date = new Date();
                 buddy_times.put(names.get(0), date.getTime());
-                return newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "");
+                return newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "ok");
             } else if (url.contains("/peers")) {
                 String hosts = "";
                 Date date = new Date();
@@ -1000,7 +985,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
 
         new AlertDialog.Builder(this)
-                .setTitle("Exit Divvy?")
+                .setTitle("Exit app?")
                 .setMessage("Are you sure you want to exit?")
                 .setNegativeButton(android.R.string.no, null)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
