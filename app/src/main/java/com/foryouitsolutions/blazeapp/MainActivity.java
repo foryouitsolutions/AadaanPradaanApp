@@ -2,7 +2,6 @@ package com.foryouitsolutions.blazeapp;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.FragmentTransaction;
 import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -14,7 +13,6 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
@@ -44,12 +42,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -70,7 +66,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,11 +74,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -99,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     Button btnSend, btnDiscover;
     TextView useradd, clientHost, conndev;
     private BottomSheetBehavior bottomSheetBehavior;
+    private Uri downloads_dir;
 
     private Fetch fetch;
     WifiManager wifiManager;
@@ -119,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     String host_server;
     String download_file_url;
     FileAdapter fileAdapter;
+    private String download_file_name;
 
     WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
         @Override
@@ -586,10 +581,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
     }
 
     void download_request_handler(String url, String file_name) {
-
-
-        File file = new File(file_name);
-        saveToFile(url, file);
+        saveToFile(url, file_name);
     }
 
     final int SAVE_FILE_RESULT_CODE = 15;
@@ -606,16 +598,22 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         }
     }
 
-    void saveToFile(String url, File aFile) {
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.setType("*/*");
-        intent.putExtra(Intent.EXTRA_TITLE, aFile.getPath());
-        Log.d(TAG, "saveToFile: " + aFile.getPath());
+    void saveToFile(String url, String aFile) {
         download_file_url = url;
-        try {
-            startActivityForResult(intent, SAVE_FILE_RESULT_CODE);
-        } catch (Exception e) {
-            e.printStackTrace();
+        download_file_name = aFile;
+        if(downloads_dir == null){
+            selectDir();
+        } else {
+            saveFile();
+        }
+    }
+
+    private void saveFile() {
+        if (downloads_dir != null && download_file_name != null && download_file_name.length() > 0
+                && download_file_url != null && download_file_url.length() > 0) {
+            DocumentFile documentFolder = DocumentFile.fromTreeUri(MainActivity.this, downloads_dir);
+            DocumentFile documentFile = documentFolder.createFile("*/*", download_file_name);
+            download_file(download_file_url, documentFile.getUri(), getApplicationContext());
         }
     }
 
@@ -642,7 +640,11 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 }
                 break;
             case 9999:
-                Log.i("Test", "Result URI " + data.getData());
+                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                    downloads_dir = data.getData();
+                    saveFile();
+                }
+
                 break;
         }
     }
