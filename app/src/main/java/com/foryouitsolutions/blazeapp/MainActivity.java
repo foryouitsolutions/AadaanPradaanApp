@@ -892,7 +892,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 String hosts = "";
                 Date date = new Date();
                 for (String name : buddy_ips.keySet()) {
-                    if (date.getTime() - buddy_times.get(name) < 30000) {
+                    if (date.getTime() - buddy_times.get(name) < 15000) {
                         if (hosts.length() > 0) {
                             hosts += "::";
                         }
