@@ -62,9 +62,9 @@
                 android:layout_height="30dp"
                 android:paddingRight="16dp"
                 android:scaleType="fitXY"
-                android:backgroundTint="@color/colorBlack"
                 android:layout_gravity="right"
-                android:src="@drawable/ic_baseline_clear_all_24"/>
+                android:src="@drawable/ic_baseline_clear_all_24"
+                android:tint="@color/colorBlack"/>
 
 
         </LinearLayout>

@@ -508,12 +508,16 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 selectDir();
                 return true;
             case R.id.about:
-                Intent i = new Intent(MainActivity.this,about.class);
-                startActivity(i);
+                about();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void about() {
+        aboutDialog aboutDialog = new aboutDialog();
+        aboutDialog.show(getSupportFragmentManager(), "About Dialog");
     }
 
     private void selectDir() {
