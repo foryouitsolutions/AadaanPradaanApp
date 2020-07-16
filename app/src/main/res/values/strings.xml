@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Blaze</string>
-
+    <string name="copy_right" translatable="false">Copyrights © %1$d</string>
     <string name="pause">PAUSE</string>
     <string name="resume">RESUME</string>
     <string name="download">Download</string>
@@ -40,5 +40,11 @@
     <string name="download_speed_bytes">%1$d B/s</string>
     <string name="download_speed_kb">%1$s KB/s</string>
     <string name="download_speed_mb">%1$s MB/s</string>
+    <string name="deviceName">Device Name</string>
+    <string name="folder">Set Directory</string>
+    <string name="about">About</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+
 
 </resources>

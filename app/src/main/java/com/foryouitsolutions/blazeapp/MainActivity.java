@@ -2,6 +2,7 @@ package com.foryouitsolutions.blazeapp;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.FragmentTransaction;
 import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -47,6 +48,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -500,8 +503,24 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
             case R.id.profile:
                 profile();
                 return true;
+            case R.id.setDirectory:
+                Toast.makeText(this, "Select Transfer Folder", Toast.LENGTH_LONG).show();
+                selectDir();
+                return true;
+            case R.id.about:
+                Intent i = new Intent(MainActivity.this,about.class);
+                startActivity(i);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void selectDir() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            i.addCategory(Intent.CATEGORY_DEFAULT);
+            startActivityForResult(Intent.createChooser(i, "Choose directory"), 9999);
         }
     }
 
@@ -581,6 +600,10 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 } else if(resultCode == RESULT_OK && data.getClipData() != null){
                     handler.post(download_runner(data.getClipData()));
                 }
+             break;
+            case 9999:
+                Log.i("Test", "Result URI " + data.getData());
+                break;
         }
     }
 

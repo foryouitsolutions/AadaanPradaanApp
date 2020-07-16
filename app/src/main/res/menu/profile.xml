@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
     <item
         android:id="@+id/profile"
-        android:title="Add Username"
-        app:showAsAction="always"
         android:icon="@drawable/ic_baseline_phonelink_setup_24"
-        />
+        app:showAsAction="never"
+        android:title="@string/deviceName">
+    </item>
+    <item
+    android:id="@+id/setDirectory"
+    android:icon="@drawable/ic_baseline_folder_open_24"
+    app:showAsAction="never"
+    android:title="@string/folder">
+    </item>
+    <item
+        android:id="@+id/about"
+        android:icon="@drawable/ic_baseline_folder_open_24"
+        app:showAsAction="never"
+        android:title="@string/about">
+    </item>
 </menu>
