@@ -82,11 +82,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import fi.iki.elonen.NanoHTTPD;
+import ru.bartwell.exfilepicker.ExFilePicker;
+import ru.bartwell.exfilepicker.data.ExFilePickerResult;
 
 public class MainActivity extends AppCompatActivity implements profileDialog.profileDialogListener, FileAdapter.ActionListener {
     private static final int STORAGE_PERMISSION_CODE = 200;
     private static final long UNKNOWN_REMAINING_TIME = -1;
     private static final long UNKNOWN_DOWNLOADED_BYTES_PER_SECOND = 0;
+    private static final int EX_FILE_PICKER_RESULT = 0;
 
     private static final String TAG = "sdsd";
     Button btnSend, btnDiscover;
@@ -297,6 +300,8 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         setContentView(R.layout.activity_main);
         getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
         getSupportActionBar().setCustomView(R.layout.custom_actionbar);
+
+
         getSupportActionBar().setElevation(0);
         //Initializations
         FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(MainActivity.this)
@@ -380,12 +385,21 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         //
         // All
         ImageView btndelete = findViewById(R.id.deleteLog);
+        ImageView btnOpenFolder = findViewById(R.id.openFolder);
+
+
         btndelete.setOnClickListener(v -> {
             if (deleteDownloads()) {
                 Toast.makeText(getApplicationContext(), "Cleared Transfers", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getApplicationContext(), "Nothing to Clear in Transfers", Toast.LENGTH_SHORT).show();
             }
+
+        });
+
+        btnOpenFolder.setOnClickListener(v -> {
+            ExFilePicker exFilePicker = new ExFilePicker();
+            exFilePicker.start(this, EX_FILE_PICKER_RESULT);
 
         });
 
@@ -516,7 +530,7 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
 
 
         manager.addLocalService(channel, serviceInfo,
-                ActionListenerBuilder("Added service to manager", "Adding service to manager failed with code ")
+                ActionListenerBuilder("Added service to manager", "No connected Device Available or may be device offline")
         );
     }
 
@@ -646,6 +660,11 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
                 }
 
                 break;
+            case EX_FILE_PICKER_RESULT:
+                ExFilePickerResult result = ExFilePickerResult.getFromIntent(data);
+                if (result != null && result.getCount() > 0) {
+                    // Here is object contains selected files names and path
+                }
         }
     }
 

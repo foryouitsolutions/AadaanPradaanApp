@@ -53,18 +53,23 @@
                 android:paddingLeft="16dp"
                 android:textStyle="bold"/>
 
-
-
-
             <ImageView
                 android:id="@+id/deleteLog"
                 android:layout_width="43dp"
                 android:layout_height="30dp"
                 android:paddingRight="16dp"
                 android:scaleType="fitXY"
-                android:layout_gravity="right"
                 android:src="@drawable/ic_baseline_clear_all_24"
-                android:tint="@color/colorBlack"/>
+                android:tint="#EF6C00"/>
+
+            <ImageView
+                android:id="@+id/openFolder"
+                android:layout_width="43dp"
+                android:layout_height="29dp"
+                android:paddingRight="16dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_baseline_folder_open_24"
+                android:tint="#558B2F"/>
 
 
         </LinearLayout>
