@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -227,7 +228,9 @@ public class MainActivity extends AppCompatActivity implements profileDialog.pro
         buddies.clear();
         buddy_ips.clear();
 
-        ((TextView) findViewById(R.id.empty)).setText("Long press on the device name to connect to it");
+        TextView textView = (TextView) findViewById(R.id.empty);
+        textView.setText("Long press on the device name to connect to it");
+        textView.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL));
 
         if (wifiManager == null) {
             wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
